@@ -83,7 +83,7 @@ ml-bike-sharing/
 
 ### Giai đoạn 4: Làm sạch, Kỹ thuật đặc trưng và Chuẩn hóa (Mục 4. Proposed phần 2 - Trang 14–16)
 
-* [ ] **Bước 15 [LẬP TRÌNH (`notebooks/step2_prep.ipynb`)]:** Xóa cột định danh (`instant`, `dteday`), xóa 2 cột `casual` và `registered` để chống Overfitting do rò rỉ dữ liệu, xóa `atemp` và xử lý 22 dòng độ ẩm bằng 0.
+* [x] **Bước 15 [LẬP TRÌNH (`notebooks/step2_prep.ipynb`)]:** Xóa cột định danh (`instant`, `dteday`), xóa 2 cột `casual` và `registered` để chống Overfitting do rò rỉ dữ liệu, xóa `atemp` và xử lý 22 dòng độ ẩm bằng 0. *(Hoàn thành)*
 * [ ] **Bước 16 [LẬP TRÌNH (`notebooks/step2_prep.ipynb`)]:** Lọc ngoại lai bằng IQR (bảo vệ AdaBoost), mã hóa lượng giác $\sin/\cos$ cho chu kỳ giờ, tháng, thứ, tạo đặc trưng `is_rush_hour`, mã hóa One-Hot cho biến phân loại và chạy kiểm định thống kê `f_regression` (ANOVA F-test) + `mutual_info_regression` vẽ biểu đồ xếp hạng mức độ ảnh hưởng của đặc trưng (`output/prep_feature_selection.png`).
 * [ ] **Bước 17 [LẬP TRÌNH (`notebooks/step2_prep.ipynb`)]:** Chạy K-Means Clustering phân cụm các khung giờ có hành vi thuê xe tương đồng tạo đặc trưng cụm mới và dùng PCA giảm chiều xuống 2D để trực quan hóa không gian đặc trưng (`output/prep_pca_kmeans.png`).
 * [ ] **Bước 18 [LẬP TRÌNH (`notebooks/step2_prep.ipynb`)]:** Chia dữ liệu 80% Train – 20% Test (`random_state=42`), chỉ gọi `.fit()` cho bộ chuẩn hóa `StandardScaler`, `MinMaxScaler`, `RobustScaler` trên `X_train` rồi `.transform()` cho cả hai tập; lưu dữ liệu sạch ra `data/`.
