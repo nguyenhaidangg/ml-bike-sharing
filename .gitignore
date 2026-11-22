@@ -1,0 +1,23 @@
+# Virtual Environment (BẮT BUỘC bỏ qua để tránh đẩy gigabyte rác lên GitHub)
+venv/
+.venv/
+env/
+ENV/
+
+# Python cache & compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# VS Code workspace state (tùy chọn)
+.vscode/
