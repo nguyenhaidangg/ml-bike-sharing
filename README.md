@@ -24,8 +24,7 @@ ml-bike-sharing/
 │   ├── eda_3_time_trends.png          # Fever chart / Line chart theo 24 giờ
 │   └── eda_4_scatter_heatmap.png      # Scatter plot & Heatmap đa cộng tuyến
 ├── report/                            # Bản thảo báo cáo khoa học (cỡ chữ 13, $\le 25$ trang)
-│   ├── bao_cao_do_an_hoc_may.md       # Báo cáo tổng hợp từ Trang 1 đến Trang 13
-│   └── muc_4_proposed_phan1.md        # Chi tiết Mục 4 (Phần 1: EDA)
+│   └── bao_cao_do_an_hoc_may.md       # Báo cáo tổng hợp từ Trang 1 đến Trang 13 (Đang phát triển)
 ├── .gitignore                         # Bỏ qua venv, cache, file rác
 ├── requirements.txt                   # Danh sách thư viện cần thiết
 └── README.md                          # Hướng dẫn dự án
