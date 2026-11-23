@@ -15,14 +15,21 @@ ml-bike-sharing/
 │   ├── day.csv                        # Dữ liệu theo ngày
 │   └── Readme.txt                     # Mô tả dữ liệu từ UCI
 ├── notebooks/                         # Sổ tay Jupyter Notebook theo từng giai đoạn
-│   ├── step1_eda.ipynb                # Giai đoạn 3: Khám phá & Trực quan hóa dữ liệu (Đã xong)
-│   ├── step2_prep.ipynb               # Giai đoạn 4: Tiền xử lý & Kỹ thuật đặc trưng (Sắp tới)
+│   ├── step1_eda.ipynb                # Giai đoạn 3: Khám phá & Trực quan hóa dữ liệu (Hoàn thành)
+│   ├── step2_prep.ipynb               # Giai đoạn 4: Tiền xử lý & Kỹ thuật đặc trưng (Đã xong Bước 15, 16)
 │   └── step3_models.ipynb             # Giai đoạn 5: Huấn luyện & Đánh giá mô hình (Sắp tới)
 ├── output/                            # Chứa biểu đồ sắc nét 300 DPI xuất tự động
 │   ├── eda_1_histogram_log.png        # Histogram cnt gốc vs log1p(cnt)
 │   ├── eda_2_boxplot_outliers.png     # Boxplot ngoại lai theo 4 mùa
 │   ├── eda_3_time_trends.png          # Fever chart / Line chart theo 24 giờ
-│   └── eda_4_scatter_heatmap.png      # Scatter plot & Heatmap đa cộng tuyến
+│   ├── eda_4_scatter_heatmap.png      # Scatter plot & Heatmap đa cộng tuyến
+│   ├── eda_5a_weather_boxplot.png     # Boxplot loại thời tiết vs cnt
+│   ├── eda_5b_temp_scatter.png        # Scatter plot nhiệt độ vs cnt (r = +0.40)
+│   ├── eda_5c_hum_scatter.png         # Scatter plot độ ẩm vs cnt (r = -0.32)
+│   ├── eda_5d_windspeed_scatter.png   # Scatter plot tốc độ gió vs cnt (r = +0.09)
+│   ├── eda_5_weather_impact.png       # Biểu đồ ghép 2x2 tác động thời tiết
+│   ├── eda_6_time_weather_heatmap.png # Heatmap tương tác giờ x loại thời tiết
+│   └── prep_feature_selection.png     # Biểu đồ xếp hạng đặc trưng (ANOVA F-test vs Mutual Info)
 ├── report/                            # Bản thảo báo cáo khoa học (cỡ chữ 13, $\le 25$ trang)
 │   └── bao_cao_do_an_hoc_may.md       # Báo cáo tổng hợp từ Trang 1 đến Trang 13 (Đang phát triển)
 ├── .gitignore                         # Bỏ qua venv, cache, file rác
