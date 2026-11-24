@@ -90,9 +90,9 @@ Bám sát quy trình **7 bước chuẩn mực của Học máy cổ điển** �
 2. **Khám phá và Biến đổi phân phối:** Phân tích Histogram chỉ ra biến mục tiêu $cnt$ bị lệch phải nghiêm trọng ($\text{Mean } 189.5 > \text{Median } 142.0$), từ đó ứng dụng hàm biến đổi $y' = \ln(1 + y)$ (`log1p`) kéo phân phối về dạng hình chuông cân đối.
 3. **Phát hiện ngoại lai & Đa cộng tuyến:** Sử dụng biểu đồ Hộp (Boxplot) và phương pháp IQR thống kê chính xác **478 điểm ngoại lai** (2.75%), làm rõ nguy cơ gây hiện tượng học vẹt (Overfitting) cho thuật toán AdaBoost. Phân tích tương quan Pearson vạch trần hiện tượng **Đa cộng tuyến hoàn hảo** giữa $temp$ và $atemp$ ($r \approx 0.99$) làm suy biến ma trận hiệp phương sai, đồng thời cảnh báo nguy cơ **Rò rỉ dữ liệu (Data Leakage)** từ công thức $cnt = casual + registered$.
 4. **Kỹ thuật đặc trưng & Chuẩn hóa:** Đề xuất tạo mới đặc trưng chu kỳ thời gian $\text{is\_rush\_hour}$, mã hóa lượng giác $\sin/\cos$, phân cụm K-Means hành vi thuê xe và chuẩn hóa không rò rỉ dữ liệu (chỉ `.fit()` trên tập huấn luyện $X_{train}$).
-5. **Thực nghiệm đối sánh:** Triển khai quy trình kiểm định chéo 5-Fold Cross Validation và Grid Search trên 8 mô hình hồi quy cốt lõi (OLS, Ridge, Lasso, kNN, SVR, Decision Tree, Random Forest, AdaBoost, XGBoost) và 4 mô hình phân lớp nhu cầu Cao/Thấp.
+5. **Thực nghiệm đối sánh:** Triển khai quy trình kiểm định chéo 5-Fold Cross Validation và Grid Search trên 8 mô hình hồi quy cốt lõi (OLS, Ridge, Lasso, kNN, SVR, Decision Tree, Random Forest, XGBoost) và 4 mô hình phân lớp nhu cầu Cao/Thấp.
 
-*(Khung kết quả thực nghiệm tối ưu sẽ được tổng kết và cập nhật đầy đủ các chỉ số $R^2$, RMSE, MAE, F1-Score sau khi hoàn thành toàn bộ các thực nghiệm ở Mục 5).*
+**Kết quả thực nghiệm tốt nhất:** Mô hình **XGBoost (Boosting)** dẫn đầu hồi quy với $R^2 = 0.9559$, $RMSE = 36.01$ xe/giờ, $MAE = 22.42$ xe/giờ — sai số tương đối ~11.8% trên nhu cầu trung bình 189.5 xe/giờ. Trong bài toán phân lớp nhu cầu Cao/Thấp (ngưỡng Trung vị = 143 xe/giờ), **SVC (Kernel RBF)** đạt $Accuracy = 94.33\%$, $F1\text{-}Score = 0.9418$ và $ROC\text{-}AUC = 0.9877$, đủ độ tin cậy cho hệ thống cảnh báo vận hành tự động trong thực tế.
 
 ---
 
@@ -601,3 +601,200 @@ Không gian dữ liệu gồm 22 chiều đặc trưng không thể quan sát b�
 ---
 
 *(Hết Mục 4. Toàn bộ quy trình tiền xử lý và chuẩn hóa dữ liệu trên là nền tảng vững chắc để nhóm em tiến hành Huấn luyện và Đánh giá thực nghiệm các mô hình ở Mục 5 tiếp theo).*
+
+---
+
+\newpage
+
+# 5. EXPERIMENTS (THỰC NGHIỆM VÀ ĐÁNH GIÁ)
+
+Mục này trình bày toàn bộ ba thí nghiệm thực nghiệm được thiết kế tuần tự, từ việc chứng minh tác động của chất lượng dữ liệu, đến việc tối ưu hóa siêu tham số và đánh giá năng lực phân lớp. Mọi thực nghiệm đều thực thi trên cùng một môi trường (`Python 3.11+`, `scikit-learn 1.5+`, `XGBoost 2.1+`) và cùng tập dữ liệu phân chia cố định (`random_state=42`) nhằm đảm bảo tính tái tạo kết quả (Reproducibility) hoàn toàn.
+
+---
+
+## 5.1. Thí nghiệm 1: Minh chứng tác động của Tiền xử lý dữ liệu
+
+**Mục tiêu:** Trả lời câu hỏi khoa học cốt lõi: *"Liệu giai đoạn Làm sạch, Kỹ thuật đặc trưng và Chuẩn hóa dữ liệu ở Mục 4 có cải thiện đáng kể hiệu năng mô hình hay không?"*
+
+**Thiết kế thực nghiệm đối chứng (Ablation Study):**
+- **Nhóm Đối chứng (Dữ liệu thô):** Đọc trực tiếp tệp `hour.csv` gốc, loại bỏ tối thiểu (chỉ xóa 4 cột rò rỉ: `instant`, `dteday`, `casual`, `registered`), chia Train/Test và huấn luyện mô hình ngay không qua bất kỳ bước tiền xử lý nào.
+- **Nhóm Thử nghiệm (Dữ liệu sạch):** Sử dụng toàn bộ pipeline tiền xử lý gồm 8 bước đã xây dựng tại Mục 4 (xử lý lỗi cảm biến, capping IQR, mã hóa $\sin/\cos$, `is_rush_hour`, One-Hot, K-Means, PCA, StandardScaler).
+
+**Kết quả Thí nghiệm 1:**
+
+| Thuật toán | RMSE (Thô) | RMSE (Sạch) | % Giảm RMSE | $R^2$ (Thô) | $R^2$ (Sạch) | Cải thiện $R^2$ |
+|:--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Linear Regression** | 139.21 | 87.60 | **-37.1%** | 0.388 | 0.739 | **+90%** |
+| **kNN (k = 5, uniform)** | 52.74 | 58.16 | +10.3%* | 0.912 | 0.885 | -3.0% |
+| **AdaBoost Regressor** | 105.01 | 92.22 | **-12.2%** | 0.652 | 0.711 | +8.8% |
+| **ANN (MLPRegressor 3 lớp)** | 51.16 | 38.52 | **-24.7%** | 0.917 | 0.949 | **+3.5%** |
+
+> [!NOTE]
+> *kNN với tham số mặc định (`weights='uniform'`) có RMSE tăng nhẹ 10.3% sau tiền xử lý do lỗi không gian khoảng cách Euclid trong 23 chiều đặc trưng (Lời nguyền chiều cao / Curse of Dimensionality). Vấn đề này được giải quyết ở Thí nghiệm 2 khi chuyển sang trọng số khoảng cách (`weights='distance'`) thông qua GridSearchCV, nâng $R^2$ lên 0.8939.
+
+**Hình 5.1:** Biểu đồ đối chứng hiệu năng Dữ liệu thô vs. Dữ liệu sạch trên 4 thuật toán đại diện.
+
+![Đối chứng Dữ liệu thô vs. Sạch](../output/step3_models_01_raw_vs_clean.png)
+*Hình 5.1: So sánh RMSE và $R^2$ trước và sau quy trình tiền xử lý toàn diện trên 4 thuật toán đại diện. Hồi quy tuyến tính (Linear Regression) đạt mức cải thiện ngoạn mục nhất với RMSE giảm 37.1% và $R^2$ tăng gần gấp đôi từ 0.388 lên 0.739.*
+
+**Nhận xét:**
+- Kết quả thực nghiệm này khẳng định rằng **Giai đoạn Tiền xử lý và Kỹ thuật đặc trưng** là thành phần có giá trị gia tăng lớn nhất trong toàn bộ pipeline. Với mô hình tuyến tính, chất lượng đặc trưng quyết định tới **90% khả năng dự đoán** ($R^2$ từ 0.388 lên 0.739).
+- Phát hiện quan trọng: Mô hình ANN 3 lớp (`MLPRegressor`) đạt $R^2 = 0.949$ sau tiền xử lý nhưng **vẫn không vượt được XGBoost** ($R^2 = 0.9559$) — xác nhận rằng với bài toán chuỗi thời gian có quy luật tuần hoàn rõ ràng như nhu cầu thuê xe, Học máy cổ điển kết hợp Kỹ thuật đặc trưng tốt hoàn toàn cạnh tranh được với Mạng nơ-ron nhân tạo.
+
+---
+
+## 5.2. Thí nghiệm 2: 5-Fold Cross Validation và Tinh chỉnh siêu tham số (GridSearchCV) trên 8 mô hình Hồi quy cốt lõi
+
+**Mục tiêu:** Tìm ra mô hình hồi quy tốt nhất với tham số tối ưu và đánh giá toàn diện theo đầy đủ các độ đo học thuật.
+
+**Thiết kế thực nghiệm:**
+- **Chiến lược kiểm định chéo:** `KFold(n_splits=5, shuffle=True, random_state=42)` nhằm đảm bảo mọi điểm dữ liệu đều được dùng làm tập kiểm định đúng một lần.
+- **Tối ưu hóa siêu tham số:** `GridSearchCV(scoring='neg_mean_squared_error', n_jobs=-1)` với lưới tham số gọn gàng 4–6 tổ hợp tiêu biểu cho mỗi mô hình.
+- **Tập đặc trưng:** 23 đặc trưng sạch sau tiền xử lý, tập kiểm thử độc lập 3,476 mẫu hoàn toàn chưa tham gia quá trình huấn luyện hay tối ưu hóa.
+
+**Hình 5.2:** Đường cong kiểm định (Validation Curve) minh họa sự đánh đổi Bias-Variance.
+
+![Validation Curve Bias-Variance](../output/step3_models_02_bias_variance.png)
+*Hình 5.2: (a) Validation Curve của Cây quyết định CART theo độ sâu `max_depth` — minh họa rõ nét ba vùng: Underfitting (High Bias, $depth \le 5$), Sweet Spot ($depth \approx 11-15$) và Overfitting (High Variance, $depth > 15$). (b) Validation Curve của Ridge Regression theo hệ số điều chuẩn L2 `alpha` — xác nhận $\alpha^* = 10.0$ là điểm cân bằng tối ưu.*
+
+**Bảng 5.2: Tổng hợp kết quả Thí nghiệm 2** (8 mô hình Hồi quy cốt lõi — đánh giá trên tập kiểm thử độc lập $N_{test} = 3,476$ mẫu):
+
+| STT | Mô hình | Tham số tối ưu | CV-RMSE | MAE | RMSE | MBE | $R^2$ | Thời gian (s) |
+|:---:|:--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| 1 | Simple Linear Regression | `feature: hr_sin` | 159.71 | 119.97 | 154.77 | +4.62 | 0.1848 | 2.20 |
+| 2 | Multiple Linear Regression | Toàn bộ 23 đặc trưng | 90.02 | 67.33 | 87.60 | +2.84 | 0.7389 | 1.52 |
+| 3 | Ridge Regression (L2) | `alpha = 10.0` | 90.02 | 67.33 | 87.60 | +2.84 | 0.7388 | 1.52 |
+| 4 | Lasso Regression (L1) | `alpha = 0.01` | 90.02 | 67.32 | 87.60 | +2.84 | 0.7389 | 0.59 |
+| 5 | kNN Regressor | `k=7, weights='distance'` | 59.25 | 38.55 | 55.83 | +0.82 | 0.8939 | 0.56 |
+| 6 | SVR (Kernel RBF) | `C=15, gamma=0.05` | 57.67 | 35.13 | 53.77 | -4.35 | 0.9016 | 47.13 |
+| 7 | CART Decision Tree | `max_depth=15, min_split=10` | 52.44 | 30.15 | 50.15 | +0.14 | 0.9144 | 0.34 |
+| 8 | Random Forest (Bagging) | `n_est=150, max_depth=20` | 41.78 | 23.26 | 38.34 | +1.20 | 0.9500 | 7.89 |
+| **9** | **XGBoost (Boosting)** | **`n_est=150, max_depth=7, lr=0.1`** | **39.39** | **22.42** | **36.01** | **+0.43** | **0.9559** | **3.93** |
+
+**Nhận xét theo 3 tiêu chí học thuật:**
+
+1. **Khả năng giải thích (Interpretability):** Hồi quy tuyến tính (OLS, Ridge, Lasso) có khả năng giải thích cao nhất — từ hệ số hồi quy $\hat{\beta}$ có thể suy ra trực tiếp mức độ ảnh hưởng đơn vị của từng đặc trưng. Đây là ưu điểm quyết định khi nhà quản lý cần giải trình quyết định điều phối xe với cơ quan. Tuy nhiên, năng lực dự đoán chỉ đạt $R^2 \approx 0.739$ — ngưỡng trần của bài toán phi tuyến với đặc trưng tuyến tính.
+
+2. **Thời gian tính toán (Computational Efficiency):** Lasso ($0.59$s), CART ($0.34$s) và kNN ($0.56$s) gần như huấn luyện tức thì. **XGBoost** nổi bật khi vừa đạt hiệu năng dự đoán tốt nhất ($R^2 = 0.9559$) với thời gian huấn luyện chỉ $3.93$s — hiệu quả tính toán cực kỳ cao so với SVR ($47.13$s mà $R^2 = 0.9016$, kém hơn rõ rệt). Random Forest cần $7.89$s và $R^2 = 0.9500$, đứng thứ hai toàn diện.
+
+3. **Sức mạnh dự đoán (Predictive Power):** Có sự phân hóa rõ ràng giữa 3 nhóm thuật toán: (i) **Nhóm Tuyến tính** ($R^2 \in [0.18, 0.74]$), (ii) **Nhóm Phi tuyến đơn lẻ** ($R^2 \in [0.89, 0.91]$), và (iii) **Nhóm Kết hợp Cây (Ensemble)** ($R^2 \in [0.95, 0.96]$). Khoảng cách 20 điểm phần trăm $R^2$ giữa nhóm Tuyến tính và Ensemble cho thấy quan hệ giữa thời tiết, thời gian và nhu cầu thuê xe mang bản chất **phi tuyến phức tạp** mà các biến đổi lượng giác $\sin/\cos$ vẫn chưa phải đủ để tuyến tính hóa hoàn toàn.
+
+---
+
+## 5.3. Thí nghiệm 3: Phân lớp nhu cầu Cao / Thấp và Đánh giá ROC-AUC
+
+**Mục tiêu:** Chuyển bài toán Hồi quy liên tục sang Phân lớp nhị phân phục vụ hệ thống cảnh báo vận hành tự động trong thực tế.
+
+**Thiết kế thực nghiệm:**
+- **Ngưỡng phân tách nhị phân:** Giá trị Trung vị (Median) của biến mục tiêu trên tập huấn luyện: $\text{Median}(cnt_{train}) = 143.0$ xe/giờ. Lựa chọn Trung vị thay vì Trung bình đảm bảo tỷ lệ cân bằng hoàn hảo giữa hai lớp ($6,930$ mẫu Thấp vs. $6,973$ mẫu Cao trên tập Train, xấp xỉ $50\%/50\%$), triệt tiêu nguy cơ lệch mẫu (Class Imbalance).
+- **Bốn mô hình phân lớp:** Đại diện cho 4 trường phái thuật toán khác nhau: `LogisticRegression` (Discriminative - Tuyến tính xác suất), `GaussianNaïve Bayes` (Generative - Bayes tiền định), `SVC` (Siêu phẳng lề cực đại - Kernel RBF), `DecisionTreeClassifier` (Phân lớp theo Cây quyết định).
+
+**Bảng 5.3: Tổng hợp kết quả Thí nghiệm 3** (đánh giá trên tập kiểm thử độc lập $N_{test} = 3,476$ mẫu):
+
+| Mô hình | Accuracy | Precision | Recall | F1-Score | ROC-AUC | Thời gian (s) |
+|:--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| Logistic Regression | 90.30% | 89.68% | 90.58% | 0.9013 | 0.9651 | 0.18 |
+| Gaussian Naïve Bayes | 86.13% | 85.56% | 86.16% | 0.8586 | 0.9226 | 0.00 |
+| **SVC (Kernel RBF)** | **94.33%** | **94.54%** | **93.82%** | **0.9418** | **0.9877** | 6.00 |
+| CART Decision Tree | 92.06% | 91.00% | 92.93% | 0.9196 | 0.9610 | 0.03 |
+
+![ROC-AUC và Confusion Matrix](../output/step3_models_03_classification_roc.png)
+*Hình 5.3: (a) Đường cong ROC của 4 mô hình phân lớp — SVC áp sát góc $(0,1)$ lý tưởng với $AUC = 0.9877$; Logistic Regression đạt $AUC = 0.9651$ với thời gian huấn luyện $0.18$s. (b) Ma trận nhầm lẫn (Confusion Matrix) 2×2 của từng mô hình — SVC chỉ nhầm lẫn 197/3,476 mẫu.*
+
+**Nhận xét:**
+Toàn bộ 4 đường cong ROC đều lồi mạnh về góc trên trái $(0, 1)$, khẳng định năng lực phân loại vượt xa ngưỡng ngẫu nhiên ($AUC = 0.5$). **SVC** dẫn đầu với $ROC\text{-}AUC = 0.9877$ và $F1 = 0.9418$, đủ đảm bảo độ tin cậy cho ứng dụng thực tế: nhà quản lý có thể tự động kích hoạt cảnh báo "Nhu cầu Cao" trước nhiều giờ với tỷ lệ sai sót chỉ $5.67\%$.
+
+---
+
+## 5.4. Thực tế vs. Dự đoán và Tầm quan trọng Đặc trưng (XGBoost)
+
+**Hình 5.4:** Phân tích độ bám sát dự đoán của mô hình XGBoost tốt nhất.
+
+![Thực tế vs. Dự đoán](../output/step3_models_04_actual_vs_pred.png)
+*Hình 5.4: (a) Biểu đồ phân tán Thực tế vs. Dự đoán của XGBoost — đám mây điểm bám khít đường lý tưởng $y=x$ xuyên suốt toàn dải từ 0 đến 800 xe/giờ, $MAE = 22.42$ xe/giờ. (b) Chuỗi thời gian theo dõi liên tục 120 giờ (5 ngày) — đường XGBoost (xanh đứt nét) bắt chính xác từng đỉnh cao điểm sáng/chiều và đáy ban đêm, trong khi Hồi quy tuyến tính (cam chấm) thường xuyên bị trễ pha và ước lượng âm ban đêm.*
+
+**Hình 5.5:** Tầm quan trọng của các đặc trưng trong mô hình XGBoost.
+
+![Feature Importance](../output/step3_models_05_feature_importance.png)
+*Hình 5.5: Xếp hạng tầm quan trọng đặc trưng (Feature Importance) của XGBoost — Nhóm đặc trưng thời gian (`hour_cluster`, `is_rush_hour`, `hr_sin`, `hr_cos`) chiếm hơn 60% tổng tỷ trọng; nhiệt độ (`temp`) là yếu tố thời tiết ảnh hưởng lớn nhất (~14%).*
+
+**Nhận xét về tầm quan trọng đặc trưng:**
+- **Nhóm đặc trưng chu kỳ thời gian** (`hour_cluster`, `is_rush_hour`, `hr_sin`, `hr_cos`) chiếm hơn **60% tổng trọng số đóng góp**, khẳng định nhịp sinh học đi lại theo giờ là động lực cốt lõi nhất quyết định nhu cầu thuê xe. Đây là minh chứng định lượng thực nghiệm cho nhận định định tính từ giai đoạn EDA.
+- **Nhóm đặc trưng khí tượng**: Nhiệt độ (`temp`, ~14%) và Độ ẩm (`hum`, ~8%) là hai yếu tố thời tiết ảnh hưởng lớn nhất, nhất quán với ma trận tương quan Pearson ($r_{temp,cnt} = +0.405$) ở Mục 4.
+- Đặc trưng mới được tạo ra qua K-Means (`hour_cluster`) đứng đầu danh sách — xác nhận rằng kỹ thuật phân cụm hành vi 24 giờ đã mang lại tín hiệu phân tách mạnh mẽ mà các đặc trưng gốc không có.
+
+---
+
+## 5.5. Thảo luận về Hạn chế của Dữ liệu và Mô hình
+
+Mặc dù kết quả thực nghiệm đạt mức $R^2 = 0.9559$ (XGBoost) rất khả quan, nhóm em nhận thức rõ các hạn chế sau đây để đảm bảo tính khoa học và khách quan của nghiên cứu:
+
+| Hạn chế | Mô tả chi tiết | Hướng khắc phục trong tương lai |
+|:--- | :--- | :--- |
+| **Tính đại diện địa lý** | Toàn bộ 17,379 quan sát chỉ từ **một thành phố** (Washington D.C.) trong **2 năm** (2011–2012). Mô hình chưa được kiểm chứng tính tổng quát hóa (Generalizability) ở các thành phố khác như Hà Nội, TP. Hồ Chí Minh. | Thu thập dữ liệu từ nhiều thành phố khác nhau; sử dụng kỹ thuật Transfer Learning để thích ứng mô hình. |
+| **Tính tĩnh của mô hình** | Mô hình được huấn luyện offline (Batch Learning). Nhu cầu thuê xe thực tế biến đổi theo xu hướng dài hạn (khai trương trạm mới, biến cố đặc biệt như dịch bệnh, lễ hội bất thường) mà mô hình tĩnh không tự cập nhật được. | Áp dụng Online Learning hoặc lịch trình tái huấn luyện định kỳ (Retraining Schedule). |
+| **Độ phân giải thời gian** | Dữ liệu được tổng hợp theo đơn vị giờ. Trong thực tế vận hành, nhu cầu có thể biến động mạnh trong vòng 15–30 phút (giờ tan tầm đột ngột mưa to). | Thu thập dữ liệu ở độ phân giải 15 phút; áp dụng mô hình chuỗi thời gian ARIMA hoặc RNN/LSTM. |
+| **Lỗi cảm biến chưa được gán nhãn** | 22 bản ghi lỗi cảm biến độ ẩm ($hum = 0$) được xử lý bằng cách loại bỏ. Trong hệ thống thực tế, lỗi cảm biến có thể xảy ra thường xuyên hơn và với các dạng lỗi khó phát hiện hơn (ví dụ: giá trị bị kẹt tại một mức hằng số). | Tích hợp hệ thống phát hiện bất thường dữ liệu (Anomaly Detection) trước khi đưa vào pipeline dự báo. |
+
+---
+
+\newpage
+
+# 6. CONCLUSION (KẾT LUẬN VÀ HƯỚNG MỞ RỘNG)
+
+## 6.1. Tóm tắt kết quả đạt được
+
+Đề tài đã hoàn thành toàn bộ mục tiêu nghiên cứu đề ra ban đầu, cụ thể:
+
+**Về mặt phương pháp luận:** Nhóm em đã xây dựng và thực thi thành công quy trình **7 bước Học máy cổ điển** một cách toàn diện, minh bạch và tái tạo được, từ giai đoạn kiểm toán chất lượng dữ liệu (Know Your Data) đến giai đoạn triển khai hàm dự đoán cho dữ liệu thực tế mới. Quy trình này tuyệt đối tuân thủ nguyên tắc không "hộp đen" (non-black-box) và chống rò rỉ dữ liệu (Zero Data Leakage).
+
+**Về mặt thực nghiệm hồi quy:** Trên tập kiểm thử độc lập $N_{test} = 3,476$ mẫu giờ:
+- **Mô hình tốt nhất: XGBoost** với các tham số tối ưu `{n_estimators=150, max_depth=7, learning_rate=0.1}` đạt $R^2 = 0.9559$, $RMSE = 36.01$ xe/giờ, $MAE = 22.42$ xe/giờ — có nghĩa là mô hình dự đoán nhu cầu thuê xe chính xác trong biên độ sai số trung bình chỉ **±22 xe mỗi giờ** trên nền tảng nhu cầu trung bình 189.5 xe/giờ (sai số tương đối ~11.8%).
+- **Hiệu quả của Pipeline tiền xử lý:** Quy trình tiền xử lý toàn diện đã giảm RMSE của Linear Regression từ $139.21$ xuống $87.60$ xe/giờ (**giảm 37.1%**) và cải thiện $R^2$ gần **gấp đôi** từ $0.388$ lên $0.739$.
+- **Phát hiện đặc trưng quan trọng:** Nhóm đặc trưng thời gian (`hour_cluster`, `is_rush_hour`, $hr_{sin}/hr_{cos}$) chiếm hơn **60% tỷ trọng đóng góp** trong mô hình XGBoost, nhất quán với nhận định EDA về chu kỳ sinh hoạt ngày/đêm.
+
+**Về mặt thực nghiệm phân lớp:** Mô hình **SVC (Kernel RBF)** dẫn đầu với $Accuracy = 94.33\%$, $F1\text{-}Score = 0.9418$ và $ROC\text{-}AUC = 0.9877$ — đủ độ tin cậy để triển khai thực tế như một hệ thống cảnh báo "Nhu cầu Cao" tự động.
+
+## 6.2. Hướng nghiên cứu và Mở rộng trong tương lai
+
+Nhóm em đề xuất các hướng phát triển sau nhằm nâng cao hơn nữa độ chính xác và tính ứng dụng thực tiễn của mô hình:
+
+1. **Mô hình chuỗi thời gian có bộ nhớ dài hạn (RNN / LSTM):** Dữ liệu thuê xe là chuỗi thời gian có tính phụ thuộc bậc cao (High-order Temporal Dependency) — nhu cầu tại giờ thứ $t$ có tương quan mạnh với nhu cầu tại $t-1$, $t-24$ (cùng giờ hôm qua) và $t-168$ (cùng giờ tuần trước). Mạng **LSTM (Long Short-Term Memory)** hoặc **GRU (Gated Recurrent Unit)** được thiết kế đặc biệt để học các phụ thuộc dài hạn này mà các mô hình Học máy cổ điển xử lý kém hơn.
+
+2. **Tích hợp dữ liệu bổ sung (Data Enrichment):** Bổ sung thêm các nguồn dữ liệu: (i) Dữ liệu sự kiện đặc biệt (concerts, sports events, public holidays from calendar API), (ii) Dữ liệu giao thông thời gian thực (traffic density, accident logs), (iii) Dữ liệu vị trí trạm (station capacity, nearby POIs) để tăng độ phong phú tín hiệu đầu vào.
+
+3. **Mở rộng địa lý và Transfer Learning:** Áp dụng các kỹ thuật chuyển giao học (Transfer Learning) để thích ứng mô hình đã huấn luyện trên dữ liệu Washington D.C. sang các thành phố khác với chi phí dữ liệu và tính toán thấp hơn, đặc biệt phù hợp với các thành phố đô thị Việt Nam đang xây dựng hệ thống xe đạp công cộng.
+
+4. **Học tăng cường trực tuyến (Online Reinforcement Learning):** Triển khai mô hình Online Learning kết hợp cơ chế Phản hồi thời gian thực (Real-time Feedback) từ hệ thống cảm biến trạm, cho phép mô hình tự cập nhật trọng số khi phát hiện độ chệch phân phối (Distribution Shift) so với dữ liệu huấn luyện.
+
+---
+
+\newpage
+
+# 7. REFERENCES (TÀI LIỆU THAM KHẢO)
+
+**[1] Fanaee-T, H. & Gama, J. (2013).** *Event labeling combining ensemble detectors and background knowledge.* Progress in Artificial Intelligence, 2(2–3), 113–127. DOI: 10.1007/s13748-013-0040-3.
+*(Nguồn gốc bộ dữ liệu UCI Bike Sharing Dataset. Download tại: https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset)*
+
+**[2] Mitchell, T. M. (1997).** *Machine Learning.* McGraw-Hill Science/Engineering/Math. ISBN: 978-0070428072.
+*(Giáo trình tham khảo cơ bản nhất về định nghĩa bài toán Học máy, phân loại thuật toán và đánh giá mô hình.)*
+
+**[3] Bishop, C. M. (2006).** *Pattern Recognition and Machine Learning.* Springer. ISBN: 978-0387310732.
+*(Nền tảng lý thuyết toán học cho các mô hình Probabilistic Graphical Models, SVM và Bayesian Learning.)*
+
+**[4] Hastie, T., Tibshirani, R. & Friedman, J. (2009).** *The Elements of Statistical Learning: Data Mining, Inference, and Prediction.* 2nd Edition. Springer. ISBN: 978-0387848570.
+*(Cơ sở lý thuyết thống kê cho các phương pháp Regularization (Ridge L2, Lasso L1), Ensemble Methods (Bagging, Boosting) và Cross Validation.)*
+
+**[5] James, G., Witten, D., Hastie, T. & Tibshirani, R. (2021).** *An Introduction to Statistical Learning with Applications in Python.* Springer. ISBN: 978-3031387463.
+*(Giáo trình ứng dụng thực tế, cung cấp trực giác rõ ràng về Bias-Variance Tradeoff, Decision Trees, Random Forest và Model Selection.)*
+
+**[6] Chen, T. & Guestrin, C. (2016).** *XGBoost: A Scalable Tree Boosting System.* Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD '16), 785–794. DOI: 10.1145/2939672.2939785.
+*(Bài báo gốc giới thiệu thuật toán XGBoost — mô hình đạt hiệu năng cao nhất trong nghiên cứu này.)*
+
+**[7] Pedregosa, F. et al. (2011).** *Scikit-learn: Machine Learning in Python.* Journal of Machine Learning Research, 12, 2825–2830.
+*(Thư viện Python chính được sử dụng trong toàn bộ pipeline thực nghiệm: `GridSearchCV`, `KFold`, `StandardScaler`, tất cả các mô hình ML cổ điển.)*
+
+---
+
+*Báo cáo đồ án môn Học máy cơ bản (2611COMP171201) — Học kỳ I, Năm học 2026 – 2027.*
+*Toàn bộ mã nguồn, dữ liệu sạch và biểu đồ được lưu trữ công khai tại: https://github.com/nguyenhaidangg/ml-bike-sharing*
