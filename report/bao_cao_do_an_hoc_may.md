@@ -48,7 +48,7 @@
   * 4.7. Heatmap tương tác Giờ × Loại thời tiết (hr × weathersit) ........................ Trang 13
   * 4.8. Khung phương pháp luận: Quy trình 7 bước của Học máy cổ điển ............. Trang 14
   * 4.9. Làm sạch dữ liệu và Xử lý lỗi cảm biến ..................................................... Trang 14
-  * 4.10. Kỹ thuật tạo đặc trưng (Capping IQR, Mã hóa chu kỳ, One-Hot) ............ Trang 15
+  * 4.10. Kỹ thuật tạo đặc trưng (Ngưỡng IQR, Mã hóa chu kỳ, One-Hot) ............ Trang 15
   * 4.11. Đánh giá và Chọn lọc đặc trưng bằng Kiểm định Thống kê ....................... Trang 15
   * 4.12. Phân cụm K-Means cho 24 Khung giờ và Giảm chiều dữ liệu bằng PCA ..... Trang 16
   * 4.13. Phân chia tập dữ liệu và Chuẩn hóa Zero Data Leakage ............................ Trang 16
@@ -87,12 +87,12 @@ Quản lý và điều phối phương tiện trong hệ thống chia sẻ xe đ
 
 Bám sát quy trình **7 bước chuẩn mực của Học máy cổ điển** được giảng dạy bởi TS. Ngô Quốc Việt, nghiên cứu kiên quyết không tiếp cận theo hướng "hộp đen" (Black-box Deep Learning) mà đặt trọng tâm vào việc thấu hiểu tường tận bản chất dữ liệu (**Know Your Data**):
 1. **Kiểm toán chất lượng dữ liệu:** Thông qua kiểm tra thống kê mô tả, nghiên cứu phát hiện và cô lập **22 bản ghi có độ ẩm $hum = 0$** bất thường (lỗi cảm biến thời tiết ngày 10/03/2011).
-2. **Khám phá và Biến đổi phân phối:** Phân tích Histogram chỉ ra biến mục tiêu $cnt$ bị lệch phải nghiêm trọng ($\text{Mean } 189.5 > \text{Median } 142.0$), từ đó ứng dụng hàm biến đổi $y' = \ln(1 + y)$ (`log1p`) kéo phân phối về dạng hình chuông cân đối.
-3. **Phát hiện ngoại lai & Đa cộng tuyến:** Sử dụng biểu đồ Hộp (Boxplot) và phương pháp IQR thống kê chính xác **478 điểm ngoại lai** (2.75%), làm rõ nguy cơ gây hiện tượng học vẹt (Overfitting) cho thuật toán AdaBoost. Phân tích tương quan Pearson vạch trần hiện tượng **Đa cộng tuyến hoàn hảo** giữa $temp$ và $atemp$ ($r \approx 0.99$) làm suy biến ma trận hiệp phương sai, đồng thời cảnh báo nguy cơ **Rò rỉ dữ liệu (Data Leakage)** từ công thức $cnt = casual + registered$.
-4. **Kỹ thuật đặc trưng & Chuẩn hóa:** Đề xuất tạo mới đặc trưng chu kỳ thời gian $\text{is\_rush\_hour}$, mã hóa lượng giác $\sin/\cos$, phân cụm K-Means hành vi thuê xe và chuẩn hóa không rò rỉ dữ liệu (chỉ `.fit()` trên tập huấn luyện $X_{train}$).
-5. **Thực nghiệm đối sánh:** Triển khai quy trình kiểm định chéo 5-Fold Cross Validation và Grid Search trên 8 mô hình hồi quy cốt lõi (OLS, Ridge, Lasso, kNN, SVR, Decision Tree, Random Forest, XGBoost) và 4 mô hình phân lớp nhu cầu Cao/Thấp.
+2. **Khám phá phân phối:** Phân tích Histogram chỉ ra biến mục tiêu $cnt$ bị lệch phải mạnh ($\text{Mean } 189.5 > \text{Median } 142.0$); phép biến đổi $y' = \ln(1 + y)$ (`log1p`) được khảo sát cho thấy khả năng đưa phân phối về dạng cân đối hơn.
+3. **Phát hiện ngoại lai & Đa cộng tuyến:** Sử dụng biểu đồ Hộp (Boxplot) và phương pháp IQR thống kê **478 điểm ngoại lai** (2.75%); thực nghiệm kiểm chứng cho thấy các điểm này phản ánh nhu cầu thực tế và việc cắt trần (Capping) không cải thiện mô hình, nên nhóm em giữ nguyên giá trị gốc. Phân tích tương quan Pearson chỉ ra hiện tượng **đa cộng tuyến rất cao** giữa $temp$ và $atemp$ ($r \approx 0.99$), đồng thời cảnh báo nguy cơ **Rò rỉ dữ liệu (Data Leakage)** từ công thức $cnt = casual + registered$.
+4. **Kỹ thuật đặc trưng & Chuẩn hóa:** Tạo mới đặc trưng giờ cao điểm $\text{is\_rush\_hour}$, mã hóa lượng giác $\sin/\cos$, phân cụm K-Means hành vi thuê xe theo khung giờ; mọi phép biến đổi có học tham số (điền khuyết, K-Means, PCA, Scaler) **chỉ học trên tập huấn luyện** để chống rò rỉ dữ liệu.
+5. **Thực nghiệm đối sánh:** Triển khai kiểm định chéo 5-Fold Cross Validation và Grid Search trên 9 cấu hình mô hình hồi quy thuộc 8 họ thuật toán (Simple/Multiple OLS, Ridge, Lasso, kNN, SVR, Decision Tree, Random Forest, XGBoost) và 4 mô hình phân lớp nhu cầu Cao/Thấp.
 
-**Kết quả thực nghiệm tốt nhất:** Mô hình **XGBoost (Boosting)** dẫn đầu hồi quy với $R^2 = 0.9559$, $RMSE = 36.01$ xe/giờ, $MAE = 22.42$ xe/giờ — sai số tương đối ~11.8% trên nhu cầu trung bình 189.5 xe/giờ. Trong bài toán phân lớp nhu cầu Cao/Thấp (ngưỡng Trung vị = 143 xe/giờ), **SVC (Kernel RBF)** đạt $Accuracy = 94.33\%$, $F1\text{-}Score = 0.9418$ và $ROC\text{-}AUC = 0.9877$, đủ độ tin cậy cho hệ thống cảnh báo vận hành tự động trong thực tế.
+**Kết quả thực nghiệm tốt nhất:** Mô hình **XGBoost (Boosting)** dẫn đầu hồi quy với $R^2 = 0.9538$, $RMSE = 38.27$ xe/giờ, $MAE = 23.25$ xe/giờ — sai số tuyệt đối trung bình khoảng 12.3% so với nhu cầu trung bình 189.5 xe/giờ. Trong bài toán phân lớp nhu cầu Cao/Thấp (ngưỡng Trung vị = 143 xe/giờ), **SVC (Kernel RBF)** đạt $Accuracy = 94.36\%$, $F1\text{-}Score = 0.9421$ và $ROC\text{-}AUC = 0.9874$, cho thấy tiềm năng hỗ trợ cảnh báo vận hành trong thực tế.
 
 ---
 
@@ -319,10 +319,12 @@ $$\text{Mean } (189.5) > \text{Median } (142.0)$$
 #### Cơ sở toán học của biến đổi hàm $\text{log1p}$
 Các mô hình hồi quy tuyến tính cổ điển (Linear Regression, Ridge, Lasso) đều ngầm dựa trên giả định phần dư sai số tuân theo phân phối chuẩn (Normality assumption). Một biến mục tiêu bị lệch phải nghiêm trọng sẽ khiến mô hình bị chi phối bởi các giá trị quá lớn, dẫn đến hiện tượng phương sai sai số thay đổi (Heteroscedasticity).
 
-Để khắc phục hiện tượng này, nhóm em áp dụng phép biến đổi logarit tự nhiên mở rộng:
+Để khảo sát khả năng khắc phục hiện tượng này, nhóm em xem xét phép biến đổi logarit tự nhiên mở rộng:
 $$y' = \text{log1p}(y) = \ln(1 + y)$$
 
-Việc bổ sung thêm hằng số $1$ vào biểu thức logarit nhằm giải quyết triệt để trường hợp $y = 0$, ngăn ngừa lỗi toán học $\ln(0) = -\infty$. Như thể hiện trên Hình 4.1 (bên phải), hàm $\text{log1p}$ với đặc tính đạo hàm giảm dần đã nén mạnh các giá trị cực lớn ở đuôi phải về gần tâm, đưa phân phối của $y'$ về dạng hình chuông cân đối (tiệm cận phân phối chuẩn Gauss) với $\text{Mean} \approx 4.58$ và $\text{Median} \approx 4.96$. Điều này giúp các mô hình hồi quy tuyến tính ước lượng các trọng số $\hat{\beta}$ ổn định và tối ưu hơn đáng kể.
+Việc bổ sung thêm hằng số $1$ vào biểu thức logarit nhằm giải quyết triệt để trường hợp $y = 0$, ngăn ngừa lỗi toán học $\ln(0) = -\infty$. Như thể hiện trên Hình 4.1 (bên phải), hàm $\text{log1p}$ với đặc tính đạo hàm giảm dần đã nén mạnh các giá trị cực lớn ở đuôi phải về gần tâm, đưa phân phối của $y'$ về dạng hình chuông cân đối (tiệm cận phân phối chuẩn Gauss) với $\text{Mean} \approx 4.58$ và $\text{Median} \approx 4.96$.
+
+*Lưu ý về phạm vi áp dụng:* trong các thực nghiệm ở Mục 5, nhóm em huấn luyện và đánh giá mô hình trực tiếp trên `cnt` gốc (đơn vị xe/giờ) để các độ đo $MAE$, $RMSE$ có ý nghĩa trực quan và so sánh được giữa các mô hình. Việc huấn luyện trên $\text{log1p}(cnt)$ rồi biến đổi ngược bằng $\text{expm1}$ được để lại như một hướng mở rộng.
 
 ---
 
@@ -362,10 +364,10 @@ Xét về bản chất dữ liệu, sau khi loại bỏ các thuộc tính đị
   - Tốc độ gió (`windspeed`): Một số quan sát ghi nhận gió giật mạnh ($> 0.45$, tức $> 30\text{ km/h}$) vượt râu trên IQR, nhưng đây là biến thiên khí tượng thực tế khiến người dân ngại đạp xe chứ không phải lỗi đo đạc — việc giữ lại giúp mô hình học được quy luật phản ứng khi có gió lớn.
 - **Biến mục tiêu `cnt`:** Là biến có độ biến động mạnh nhất và bị lệch phải nặng nề. Do đó, tập trung rào chắn ngoại lai trên `cnt` theo 4 mùa là hoàn toàn khoa học và chính xác.
 
-#### Điểm mấu chốt về bản chất ngoại lai và Giải pháp Capping (Winsorization)
-- **Bản chất thực tế:** Các điểm vọt lên $800 - 977$ xe/giờ thực chất không phải lỗi cảm biến, mà chính là **giờ cao điểm tan tầm (8h sáng, 17h-18h chiều) vào những ngày thời tiết lý tưởng**. Nếu chia nhỏ theo từng khung giờ (`hr`) thì các quan sát này hoàn toàn bình thường, nhưng vì tính IQR gộp chung cả 24 giờ trong từng mùa nên chúng bị công thức toán học đẩy ra ngoài râu trên.
-- **Giải pháp xử lý an toàn:** Tổng số điểm vượt râu trên của `cnt` theo 4 mùa là **478 điểm (chiếm 2.75%)**, nằm sâu dưới ngưỡng an toàn 5%. Thay vì loại bỏ hoàn toàn (làm mất dữ liệu giờ cao điểm thực tế), nhóm em áp dụng kỹ thuật **Capping (Winsorization)**: giới hạn trần các điểm này về đúng ngưỡng râu trên của từng mùa.
-- **Tác động tích cực đến mô hình:** Mức cắt gọt nhẹ này vừa đủ để bảo vệ các thuật toán nhạy nhiễu như **Linear Regression** và **AdaBoost** (do cơ chế phạt bình phương sai số $(y - \hat{y})^2$ và tự động tăng trọng số mẫu lỗi) khỏi bị "học vẹt", vừa giữ lại trọn vẹn 17,379 giờ liên tục để các mô hình dựa trên cây (như Random Forest, XGBoost) học được đầy đủ quy luật giờ cao điểm.
+#### Điểm mấu chốt về bản chất ngoại lai và Hướng xử lý
+- **Bản chất thực tế:** Các điểm vọt lên $800 - 977$ xe/giờ thực chất không phải lỗi cảm biến, mà chính là **giờ cao điểm tan tầm (8h sáng, 17h-18h chiều) vào những ngày thời tiết lý tưởng**. Nếu chia nhỏ theo từng khung giờ (`hr`) thì các quan sát này hoàn toàn bình thường, nhưng vì tính IQR gộp chung cả 24 giờ trong từng mùa nên chúng bị công thức toán học đẩy ra ngoài râu trên. Nói cách khác, **ngoại lai theo IQR không đồng nghĩa với dữ liệu sai**.
+- **Giả thuyết cần kiểm chứng:** Các giá trị rất lớn tạo sai số bình phương lớn, có thể ảnh hưởng tới các mô hình nhạy với sai số lớn như **Linear Regression** và **AdaBoost**. Một giải pháp thường dùng là **Capping (Winsorization)**: giới hạn trần các điểm vượt ngưỡng về giá trị râu trên của từng mùa.
+- **Cách nhóm em xử lý:** Thay vì mặc định cắt trần, nhóm em giữ nguyên `cnt` gốc làm mục tiêu chính, tính ngưỡng IQR **chỉ trên tập huấn luyện** và lưu riêng một phiên bản đã Capping để **kiểm chứng bằng thực nghiệm** (Mục 4.10 và Mục 5.1). Kết quả cho thấy Capping không cải thiện mô hình, nên các nhu cầu cao được giữ lại như hành vi thực tế.
 
 ---
 
@@ -400,8 +402,8 @@ Nhằm kiểm tra mối liên hệ tuyến tính giữa các biến đầu vào 
 ![Ma trận tương quan và Scatter Plot giữa temp và atemp](../output/step1_eda_04_scatter_heatmap.png)
 *Hình 4.4: Biểu đồ Scatter Plot phân tích mối quan hệ giữa `temp` và `atemp` (trái) cùng Ma trận tương quan nhiệt Correlation Heatmap giữa các thuộc tính số học (phải).*
 
-#### 1. Hiện tượng Đa cộng tuyến hoàn hảo giữa `temp` và `atemp`
-Qua biểu đồ phân tán (Hình 4.4 - bên trái), các cặp điểm $(\text{temp}, \text{atemp})$ tạo thành một đường thẳng chéo hoàn hảo với hệ số tương quan đạt mức gần như tuyệt đối:
+#### 1. Hiện tượng Đa cộng tuyến rất cao giữa `temp` và `atemp`
+Qua biểu đồ phân tán (Hình 4.4 - bên trái), các cặp điểm $(\text{temp}, \text{atemp})$ tập trung sát một đường thẳng chéo với hệ số tương quan rất cao (chưa phải tuyệt đối $1.0$ nhưng gần như trùng lặp thông tin):
 $$r(\text{temp}, \text{atemp}) = 0.9877 \approx \mathbf{0.99}$$
 
 **Bản chất lý thuyết thống kê:** Trong hồi quy tuyến tính cổ điển (OLS), vector ước lượng trọng số được tính bằng công thức:
@@ -480,10 +482,10 @@ Hình 4.6 tiết lộ hiệu ứng kép quan trọng: **thời tiết khuếch �
 
 ```mermaid
 flowchart TD
-    A["1. Thu thập dữ liệu<br/>(UCI Bike Sharing - hour.csv: 17,379 dòng)"] --> B["2. Khám phá & Làm sạch dữ liệu<br/>(Xử lý 22 lỗi cảm biến hum=0, Xóa rò rỉ casual/registered, Xóa đa cộng tuyến atemp)"]
-    B --> C["3. Kỹ thuật tạo đặc trưng<br/>(Capping IQR ngoại lai, Mã hóa sin/cos, is_rush_hour, One-Hot, Phân cụm K-Means)"]
-    C --> D["4. Phân chia Train/Test & Chuẩn hóa<br/>(Chia 80% Train - 20% Test TRƯỚC khi Scale: Zero Data Leakage)"]
-    D --> E["5. Huấn luyện mô hình (Model Training)<br/>(8 mô hình Hồi quy cốt lõi + Đối chứng Thô vs. Sạch)"]
+    A["1. Thu thập dữ liệu<br/>(UCI Bike Sharing - hour.csv: 17,379 dòng)"] --> B["2. Khám phá & Làm sạch dữ liệu<br/>(Xóa rò rỉ casual/registered, Xóa đa cộng tuyến atemp, Mã hóa sin/cos, is_rush_hour, One-Hot)"]
+    B --> C["3. Phân chia Train/Test 80/20<br/>(TRƯỚC mọi bước có học tham số: Zero Data Leakage)"]
+    C --> D["4. Tiền xử lý học trên Train<br/>(Điền hum=0, Ngưỡng IQR, K-Means hour_cluster, PCA, StandardScaler)"]
+    D --> E["5. Huấn luyện mô hình (Model Training)<br/>(9 cấu hình Hồi quy + Đối chứng Thô vs. Sạch + Phân lớp)"]
     E --> F["6. Tinh chỉnh siêu tham số<br/>(5-Fold Cross Validation + GridSearchCV n_jobs=-1)"]
     F --> G["7. Đánh giá & Dự báo thực tế<br/>(So sánh MAE, MSE, RMSE, R², Phân tích Feature Importance, Dự đoán mẫu mới)"]
 ```
@@ -503,30 +505,36 @@ Hai thuộc tính `casual` (số lượng khách vãng lai) và `registered` (s�
 $$\text{cnt} = \text{casual} + \text{registered}$$
 Trong thực tế vận hành hệ thống xe đạp, tại thời điểm cần dự đoán nhu cầu của giờ tiếp theo hoặc ngày mai, người quản trị hoàn toàn chưa thể biết trước số lượng khách vãng lai và khách hội viên. Nếu giữ lại hai cột này, các mô hình học máy sẽ chỉ học phép cộng số học đơn giản và cho ra độ chính xác $100\%$ giả tạo (Data Leakage), làm mất hoàn toàn khả năng khái quát hóa. Do đó, nhóm em bắt buộc loại bỏ `casual` và `registered` ngay từ đầu.
 
-#### 3. Loại bỏ thuộc tính đa cộng tuyến hoàn hảo
-Kết quả phân tích ma trận tương quan ở Hình 4.4 cho thấy nhiệt độ thực tế (`temp`) và nhiệt độ cảm nhận (`atemp`) có hệ số tương quan đạt tới $r = +0.99$. Sự phụ thuộc tuyến tính gần như tuyệt đối này gây ra hiện tượng ma trận suy biến trong hồi quy tuyến tính OLS. Nhóm em loại bỏ cột `atemp` và giữ lại cột `temp`.
+#### 3. Loại bỏ thuộc tính đa cộng tuyến rất cao
+Kết quả phân tích ma trận tương quan ở Hình 4.4 cho thấy nhiệt độ thực tế (`temp`) và nhiệt độ cảm nhận (`atemp`) có hệ số tương quan đạt tới $r = +0.99$. Sự phụ thuộc tuyến tính gần như tuyệt đối này khiến ma trận $X^T X$ trong hồi quy tuyến tính OLS gần suy biến. Nhóm em loại bỏ cột `atemp` và giữ lại cột `temp`.
 
 #### 4. Khắc phục lỗi cảm biến độ ẩm (`hum == 0`)
-Vào ngày 10/03/2011, trạm quan trắc gặp sự cố kỹ thuật ghi nhận 22 dòng có độ ẩm bằng 0. Thay vì xóa bỏ làm gián đoạn chuỗi thời gian liên tục, nhóm em áp dụng phương pháp điền khuyết bằng **giá trị trung vị (Median)** của độ ẩm theo từng tháng và từng khung giờ tương ứng từ các ngày bình thường. Giá trị độ ẩm nhỏ nhất hợp lệ sau xử lý là $0.0800$, đảm bảo tính toàn vẹn của 17,379 giờ quan sát.
+Vào ngày 10/03/2011, trạm quan trắc gặp sự cố kỹ thuật ghi nhận 22 dòng có độ ẩm bằng 0 (sau khi chia dữ liệu: 18 dòng thuộc tập Train, 4 dòng thuộc tập Test). Thay vì xóa bỏ làm gián đoạn chuỗi thời gian liên tục, nhóm em điền khuyết bằng **giá trị trung vị (Median)** của độ ẩm theo từng (tháng, khung giờ). Bảng trung vị này **chỉ được tính từ các dòng hợp lệ của tập Train**, rồi dùng chung để điền cho cả Train và Test, đảm bảo tính toàn vẹn của 17,379 giờ quan sát mà không dùng thông tin của tập Test.
+
+#### 5. Thứ tự xử lý chống rò rỉ dữ liệu
+Nhóm em chia các phép xử lý thành hai loại:
+- **Phép biến đổi không học tham số từ dữ liệu** (xóa cột, mã hóa $\sin/\cos$, tạo `is_rush_hour` theo quy tắc cố định, One-Hot với danh mục cố định): áp dụng độc lập trên từng dòng nên được thực hiện **trước** khi chia Train/Test.
+- **Phép biến đổi có học tham số từ dữ liệu** (trung vị điền khuyết, ngưỡng IQR, kiểm định thống kê, K-Means, PCA, các bộ Scaler): được thực hiện **sau** khi chia dữ liệu và **chỉ học trên tập Train**. Biến mục tiêu `cnt` của tập Test được giữ nguyên giá trị gốc.
 
 ---
 
 ### 4.10. Kỹ thuật tạo đặc trưng (Feature Engineering)
 
-#### 1. Lọc ngoại lai biến mục tiêu `cnt` bằng phương pháp Capping (Winsorization) theo Mùa
-Biến mục tiêu `cnt` có phân phối lệch phải mạnh với 478 điểm ngoại lai ($2.75\%$ dữ liệu) vượt ngưỡng $Q_3 + 1.5 \times IQR$ theo từng mùa. Những điểm này phần lớn là các giờ cao điểm bùng nổ vào những ngày thời tiết lý tưởng (lượng thuê lên tới $800 - 977$ xe/giờ).
-- **Vấn đề kỹ thuật:** Các giá trị cực lớn này tạo ra sai số bình phương khổng lồ $(y - \hat{y})^2 \approx 600,000$, làm bùng nổ hàm mất mát MSE và kéo lệch nghiêm trọng đường hồi quy OLS cũng như khiến thuật toán AdaBoost bị hiện tượng học vẹt (overfitting) do tự động tăng vọt trọng số cho các mẫu khó này.
-- **Giải pháp Capping (Winsorization):** Thay vì xóa bỏ dòng dữ liệu (làm mất mát thông tin đỉnh nhu cầu), nhóm em áp dụng kỹ thuật Capping: giới hạn trần các điểm vượt ngưỡng về đúng giá trị râu trên $Q_3 + 1.5 \times IQR$ của từng mùa tương ứng (Bảng 4.4).
+#### 1. Ngưỡng ngoại lai IQR theo Mùa (học trên tập Train) và phiên bản Capping để kiểm chứng
+Biến mục tiêu `cnt` có phân phối lệch phải mạnh; các giá trị vượt ngưỡng $Q_3 + 1.5 \times IQR$ phần lớn là giờ cao điểm vào những ngày thời tiết lý tưởng (lượng thuê lên tới $800 - 977$ xe/giờ).
+- **Nguyên tắc:** ngưỡng IQR được tính theo từng mùa **chỉ trên tập Train**; `cnt` của cả Train và Test **được giữ nguyên giá trị gốc** làm mục tiêu chính, để sai số đo được phản ánh đúng nhu cầu thực tế.
+- **Phiên bản kiểm chứng:** nhóm em lưu riêng một bản `y_train_capped` (giới hạn trần các điểm vượt ngưỡng về râu trên của từng mùa – kỹ thuật Capping/Winsorization) để so sánh bằng thực nghiệm ở Mục 5.1, thay vì mặc định cắt bỏ các nhu cầu cao.
 
-*Bảng 4.4: Thông số thống kê và ngưỡng trần râu trên (Upper Whisker) theo 4 mùa.*
-| Mùa trong năm (`season`) | Phân vị $Q_1$ | Phân vị $Q_3$ | Khoảng $IQR$ | Ngưỡng râu trên ($Q_3 + 1.5 \times IQR$) | Giá trị Max cũ | Số điểm ngoại lai |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Mùa 1 (Xuân)** | 23.0 | 158.0 | 135.0 | **360.5 xe/giờ** | 801 | 195 dòng |
-| **Mùa 2 (Hè)** | 46.0 | 311.0 | 265.0 | **708.5 xe/giờ** | 957 | 73 dòng |
-| **Mùa 3 (Thu)** | 68.0 | 345.0 | 277.0 | **760.5 xe/giờ** | 977 | 98 dòng |
-| **Mùa 4 (Đông)** | 46.0 | 295.0 | 249.0 | **668.5 xe/giờ** | 967 | 112 dòng |
+*Bảng 4.4: Ngưỡng râu trên (Upper Whisker) theo 4 mùa, tính trên tập Train (13,903 dòng).*
+| Mùa trong năm (`season`) | Phân vị $Q_1$ | Phân vị $Q_3$ | Ngưỡng râu trên ($Q_3 + 1.5 \times IQR$) | Giá trị lớn nhất (Train) | Số điểm vượt ngưỡng (Train) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Mùa 1 (Xuân)** | 23.0 | 159.0 | **363.0 xe/giờ** | 801 | 151 dòng |
+| **Mùa 2 (Hè)** | 46.0 | 313.0 | **713.5 xe/giờ** | 957 | 51 dòng |
+| **Mùa 3 (Thu)** | 69.0 | 350.0 | **771.5 xe/giờ** | 976 | 73 dòng |
+| **Mùa 4 (Đông)** | 46.0 | 299.0 | **678.5 xe/giờ** | 967 | 95 dòng |
+| **Tổng** | — | — | — | — | **370 dòng (2.66%)** |
 
-Sau khi áp dụng Capping, giá trị lớn nhất của biến mục tiêu `cnt` trên toàn bộ tập dữ liệu được giới hạn an toàn ở mức **$760.5$ xe/giờ** (mức trần của Mùa Thu), vừa giữ trọn vẹn $17,379$ giờ quan sát, vừa bảo vệ mô hình khỏi hiện tượng bùng nổ gradient và quá khớp.
+Ở phiên bản Capping, giá trị lớn nhất của `y_train_capped` là $771.5$ xe/giờ; tập Test giữ nguyên giá trị lớn nhất $977$ xe/giờ.
 
 #### 2. Mã hóa chu kỳ lượng giác ($\sin/\cos$ Cyclical Encoding)
 Các biến thời gian như giờ trong ngày (`hr`: $0 \to 23$), tháng (`mnth`: $1 \to 12$) và thứ trong tuần (`weekday`: $0 \to 6$) có bản chất là các chu kỳ tuần hoàn khép kín. Tuy nhiên, các thuật toán học máy chỉ nhìn nhận các con số theo khoảng cách tuyến tính: $|23 - 0| = 23$, khiến máy hiểu lầm rằng 23h đêm và 0h sáng là hai thái cực xa nhau nhất trong ngày, trong khi thực tế chúng là hai thời điểm liền kề nhau (chỉ cách nhau 1 giờ).
@@ -537,16 +545,16 @@ với chu kỳ $T = 24$ (cho giờ), $T = 12$ (cho tháng), và $T = 7$ (cho th�
 #### 3. Tạo đặc trưng nhị phân Giờ cao điểm (`is_rush_hour`)
 Từ kết quả biểu đồ Fever chart ở Hình 4.3, các đỉnh nhu cầu cao nhất chỉ bùng nổ vào các ngày làm việc thông thường (`workingday == 1`) tại khung giờ sáng ($7\text{h}, 8\text{h}, 9\text{h}$) và chiều tối ($17\text{h}, 18\text{h}, 19\text{h}$). Nhóm em tạo biến nhị phân:
 $$\text{is\_rush\_hour} = \begin{cases} 1 & \text{khi } \text{workingday} = 1 \text{ và } \text{hr} \in \{7, 8, 9, 17, 18, 19\} \\ 0 & \text{ngược lại} \end{cases}$$
-Đặc trưng này chiếm $25.0\%$ tổng số quan sát ($4,352$ giờ) với lượng thuê trung bình lên tới **$371.4$ xe/giờ**, cao gấp **2.53 lần** so với giờ bình thường ($146.7$ xe/giờ).
+Đặc trưng này chiếm $17.2\%$ tổng số quan sát ($2,983$ giờ) với lượng thuê trung bình **$396.0$ xe/giờ**, cao gấp khoảng **2.7 lần** so với các giờ còn lại ($146.7$ xe/giờ). Vì được định nghĩa theo quy tắc giờ hành chính cố định (không tính từ `cnt`), đặc trưng này không gây rò rỉ dữ liệu.
 
 #### 4. Mã hóa biến phân loại One-Hot Encoding chống Bẫy biến giả
-Biến mùa (`season`: 1, 2, 3, 4) và loại thời tiết (`weathersit`: 1, 2, 3, 4) là các biến danh nghĩa (Categorical - Nominal). Để tránh việc mô hình hiểu nhầm giá trị số học (như hiểu nhầm mùa đông gấp 4 lần mùa xuân), nhóm em áp dụng mã hóa One-Hot với tham số `drop_first=True`. Quy tắc bỏ đi 1 biến giả cơ sở ($K$ nhóm tạo $K - 1$ cột) giúp loại bỏ hoàn toàn phương trình phụ thuộc tuyến tính $\sum_{i=1}^K D_i = 1$, triệt tiêu lỗi Đa cộng tuyến hoàn hảo (Perfect Multicollinearity / Dummy Variable Trap) và giúp ma trận $X^T X$ không bị suy biến.
+Biến mùa (`season`: 1, 2, 3, 4) và loại thời tiết (`weathersit`: 1, 2, 3, 4) là các biến danh nghĩa (Categorical - Nominal). Để tránh việc mô hình hiểu nhầm giá trị số học (như hiểu nhầm mùa đông gấp 4 lần mùa xuân), nhóm em áp dụng mã hóa One-Hot với danh mục cố định $\{1, 2, 3, 4\}$ và tham số `drop_first=True`. *Lưu ý:* loại thời tiết `weathersit = 4` (mưa to, bão) chỉ xuất hiện 3 lần trong toàn bộ dữ liệu, nên mô hình gần như không học được tác động riêng của nó. Quy tắc bỏ đi 1 biến giả cơ sở ($K$ nhóm tạo $K - 1$ cột) giúp loại bỏ hoàn toàn phương trình phụ thuộc tuyến tính $\sum_{i=1}^K D_i = 1$, triệt tiêu lỗi Đa cộng tuyến hoàn hảo (Perfect Multicollinearity / Dummy Variable Trap) và giúp ma trận $X^T X$ không bị suy biến.
 
 ---
 
 ### 4.11. Đánh giá và Chọn lọc đặc trưng bằng Kiểm định Thống kê (Feature Selection)
 
-Để kiểm chứng mức độ đóng góp khách quan của từng biến đặc trưng lên biến mục tiêu `cnt`, nhóm em tiến hành đồng thời hai phương pháp kiểm định thống kê:
+Để kiểm chứng mức độ đóng góp khách quan của từng biến đặc trưng lên biến mục tiêu `cnt`, nhóm em tiến hành đồng thời hai phương pháp kiểm định thống kê, **chỉ tính trên tập Train**. Kết quả dùng để phân tích và diễn giải; nhóm em không loại bỏ đặc trưng dựa trên bảng xếp hạng này:
 1. **ANOVA F-test (`f_regression`):** Đo lường mối quan hệ tuyến tính dựa trên tỷ số phương sai giải thích.
 2. **Thông tin tương hỗ Mutual Information (`mutual_info_regression`):** Đo lường mức độ phụ thuộc phi tuyến dựa trên lý thuyết entropy thông tin Shannon.
 
@@ -554,9 +562,9 @@ Biến mùa (`season`: 1, 2, 3, 4) và loại thời tiết (`weathersit`: 1, 2,
 *Hình 4.8: Bảng xếp hạng mức độ ảnh hưởng của các đặc trưng lên nhu cầu thuê xe qua kiểm định ANOVA F-test (tuyến tính) và Mutual Information (phi tuyến).*
 
 **Phân tích kết quả từ Hình 4.8:**
-- **Đặc trưng do nhóm tự tạo bứt phá dẫn đầu:** Biến `is_rush_hour` đạt chỉ số **F-Score cao kỷ lục (> 6,300)**, vượt trội hoàn toàn so với các biến khác, chứng minh việc tạo biến giờ cao điểm đã cung cấp một tín hiệu tuyến tính cực kỳ sắc bén cho các mô hình hồi quy.
-- **Sức mạnh của biến thời gian và nhiệt độ:** Cả hai bảng kiểm định đều đồng thuận xếp `hr`, `hr_sin`, `hr_cos` và `temp` vào nhóm có sức mạnh giải thích cao nhất (Mutual Information đạt $> 0.35$ nats).
-- **Tính hiệu quả của mã hóa chu kỳ:** Các cột lượng giác `hr_sin`, `hr_cos` đều xếp ở vị trí cao trong bảng Mutual Information, khẳng định kỹ thuật mã hóa chu kỳ giúp mô hình nắm bắt rất tốt tính tuần hoàn của dữ liệu.
+- **Đặc trưng do nhóm tự tạo dẫn đầu F-test:** Biến `is_rush_hour` đạt **F-Score cao nhất ($\approx 5,098$)**, cho thấy tín hiệu giờ cao điểm có quan hệ tuyến tính rất mạnh với `cnt`.
+- **Sức mạnh của biến thời gian và nhiệt độ:** Cả hai phương pháp đều xếp nhóm giờ (`hr`, `hr_sin`, `hr_cos`) và nhiệt độ (`temp`) vào nhóm ảnh hưởng mạnh nhất; độ ẩm `hum` đứng ngay sau.
+- **Quan hệ phi tuyến của giờ trong ngày:** Theo Mutual Information, `hr` dạng số nguyên đứng đầu ($\approx 0.625$ nats), tiếp theo là `hr_cos` ($0.344$) và `hr_sin` ($0.328$). Quan hệ giữa giờ và nhu cầu có hai đỉnh sáng – chiều nên mang tính **phi tuyến**, điều mà F-test tuyến tính không phản ánh hết; đây là lý do nhóm em giữ đồng thời `hr`, `hr_sin`, `hr_cos` và `is_rush_hour`.
 
 ---
 
@@ -565,23 +573,22 @@ Biến mùa (`season`: 1, 2, 3, 4) và loại thời tiết (`weathersit`: 1, 2,
 Nhằm làm giàu thêm thông tin cho các mô hình học máy, nhóm em áp dụng phối hợp hai thuật toán học không giám sát (Unsupervised Learning): **K-Means Clustering** và **PCA (Principal Component Analysis)**.
 
 #### 1. Phân cụm hành vi 24 khung giờ bằng K-Means ($k=3$)
-Thay vì xem xét từng giờ riêng rẽ, nhóm em xây dựng hồ sơ nhu cầu của 24 khung giờ dựa trên 3 thông số: $[\text{Lượng thuê TB}, \text{Lượng thuê Ngày thường}, \text{Lượng thuê Cuối tuần}]$. Thuật toán K-Means với $k=3$ đã tự động phân tách 24 giờ thành **3 cụm hành vi đời sống rất tự nhiên**:
-- **Cụm 0 — Đêm khuya & rạng sáng (0h–6h, 22h–23h):** Gồm 9 khung giờ người dân ngủ nghỉ, nhu cầu chạm đáy chỉ **$49.7$ xe/giờ** ($37.2\%$ dữ liệu).
-- **Cụm 1 — Ban ngày sinh hoạt thông thường (7h, 9h–16h, 20h–21h):** Gồm 11 khung giờ sinh hoạt ổn định, đạt **$228.7$ xe/giờ** ($46.1\%$ dữ liệu).
-- **Cụm 2 — Cao điểm đi làm & tan tầm (8h, 17h–19h):** Gồm 4 khung giờ đỉnh điểm của người đi làm và học sinh, lượng thuê bùng nổ lên **$374.1$ xe/giờ** ($16.8\%$ dữ liệu).
+Thay vì xem xét từng giờ riêng rẽ, nhóm em xây dựng hồ sơ nhu cầu của 24 khung giờ dựa trên 3 thông số: $[\text{Lượng thuê TB}, \text{Lượng thuê Ngày thường}, \text{Lượng thuê Cuối tuần}]$, **chỉ tính từ tập Train**. Bảng ánh xạ "giờ → cụm" học từ Train được áp dụng cho cả Train và Test. Cách làm này tương tự *mã hóa theo mục tiêu (target encoding)*: hợp lệ khi chỉ dùng `cnt` của tập Train, và sẽ gây rò rỉ dữ liệu nếu dùng `cnt` của toàn bộ dữ liệu. Thuật toán K-Means với $k=3$ phân tách 24 giờ thành **3 cụm hành vi**:
+- **Cụm 0 — Đêm khuya & rạng sáng (0h–6h, 22h–23h):** 9 khung giờ, nhu cầu thấp nhất khoảng **$49.5$ xe/giờ** ($37.2\%$ quan sát Train).
+- **Cụm 1 — Ban ngày sinh hoạt thông thường (7h, 9h–16h, 19h–21h):** 12 khung giờ, nhu cầu ổn định khoảng **$238.0$ xe/giờ** ($50.3\%$ quan sát Train).
+- **Cụm 2 — Cao điểm đi làm & tan tầm (8h, 17h–18h):** 3 khung giờ đỉnh, nhu cầu cao nhất khoảng **$417.9$ xe/giờ** ($12.6\%$ quan sát Train).
 
-Đặc trưng mới `hour_cluster` được tạo ra để cung cấp tín hiệu nhóm hành vi trực tiếp cho các mô hình hồi quy.
+Vì nhãn cụm 0/1/2 là biến danh nghĩa, đặc trưng `hour_cluster` được **mã hóa One-Hot** (`drop_first=True`) thành hai cột `hour_cluster_1` và `hour_cluster_2`.
 
 #### 2. Trực quan hóa không gian đặc trưng bằng PCA
-Không gian dữ liệu gồm 22 chiều đặc trưng không thể quan sát bằng mắt thường. Nhóm em áp dụng **PCA** nén toàn bộ không gian này về 2 thành phần chính (PC1 và PC2) giải thích **$25.2\%$ tổng phương sai** ($PC_1: 13.1\%, PC_2: 12.2\%$) và trực quan hóa tại Hình 4.9.
+Không gian dữ liệu gồm 22 chiều đặc trưng không thể quan sát bằng mắt thường. Nhóm em áp dụng **PCA** (cùng `StandardScaler`, **fit trên tập Train**) nén không gian này về 2 thành phần chính, giải thích tổng cộng khoảng **$25.3\%$ phương sai** ($PC_1: 13.1\%, PC_2: 12.2\%$), và trực quan hóa tại Hình 4.9.
 
 ![Phân cụm K-Means và Không gian đặc trưng PCA](../output/step2_prep_02_pca_kmeans.png)
-*Hình 4.9: (Trái) Hồ sơ phân cụm 24 khung giờ theo K-Means (k=3); (Phải) Không gian đặc trưng 2D qua PCA với 3 cụm màu và các tâm cụm (Centroids) phân bố cách biệt.*
+*Hình 4.9: (Trái) Hồ sơ phân cụm 24 khung giờ theo K-Means (k=3), học trên tập Train; (Phải) Hình chiếu 2D qua PCA của tập Train với 3 cụm màu và các tâm cụm.*
 
 **Nhận xét từ Hình 4.9:**
-- Trên mặt phẳng 2D của PCA, các điểm dữ liệu thuộc 3 cụm có sự phân tách rõ rệt thành từng dải màu dọc theo trục tọa độ.
-- Ba tâm cụm (Centroids - ký hiệu dấu chữ `X`) nằm cách biệt nhau: Tâm Cụm 0 dạt về phía $(+0.295, -0.362)$, Tâm Cụm 1 ở $(-0.150, +0.175)$ và Tâm Cụm 2 ở $(-0.240, +0.322)$. Sự cách biệt này là bằng chứng thực chứng khẳng định việc phân cụm K-Means đã tìm được cấu trúc không gian tách biệt rõ ràng, mang lại giá trị phân loại cao cho các mô hình học máy.
-- *Lưu ý kỹ thuật:* Hai cột tọa độ `pca_1` và `pca_2` chỉ phục vụ trực quan hóa trên đồ thị Hình 4.9 và được nhóm em **loại bỏ khỏi ma trận đặc trưng huấn luyện** để tránh gây đa cộng tuyến nhân tạo cho mô hình.
+- Hai thành phần chính chỉ giải thích khoảng một phần tư phương sai, nên hình chiếu 2D **chỉ mang tính minh họa**: các cụm có tâm lệch nhau nhưng các điểm vẫn **chồng lấn đáng kể**. Giá trị của `hour_cluster` được đánh giá qua kết quả mô hình ở Mục 5 chứ không dựa trên hình chiếu này.
+- *Lưu ý kỹ thuật:* Hai tọa độ PCA chỉ phục vụ trực quan hóa và **không được đưa vào ma trận đặc trưng huấn luyện**.
 
 ---
 
@@ -590,13 +597,14 @@ Không gian dữ liệu gồm 22 chiều đặc trưng không thể quan sát b�
 Đây là bước kỹ thuật cốt lõi bảo vệ đồ án khỏi các lỗi phương pháp luận nghiêm trọng:
 1. **Phân chia Train / Test trước khi chuẩn hóa:**
    - Tập dữ liệu $17,379$ quan sát được phân chia thành **Tập Huấn luyện ($80\%$ - $13,903$ dòng)** và **Tập Kiểm tra ($20\%$ - $3,476$ dòng)** với `random_state=42`.
-   - Việc phân chia được thực hiện **TRƯỚC** khi gọi bất kỳ bộ Scaler nào.
+   - Việc phân chia được thực hiện **TRƯỚC** mọi phép xử lý có học tham số từ dữ liệu (điền khuyết, ngưỡng IQR, K-Means, PCA, Scaler).
+   - *Hạn chế:* dữ liệu là chuỗi thời gian theo giờ; chia ngẫu nhiên có thể đưa các giờ liền kề của cùng một ngày vào cả Train và Test, khiến kết quả đánh giá lạc quan hơn so với dự báo tương lai thực sự (xem Mục 5.5).
 2. **Chuẩn hóa Zero Data Leakage:**
    - Bộ chuẩn hóa `StandardScaler` (cùng `MinMaxScaler` và `RobustScaler`) **chỉ được gọi lệnh `.fit()` duy nhất trên tập $X_{\text{train}}$** để học giá trị trung bình $\mu$ và độ lệch chuẩn $\sigma$ của quá khứ.
    - Sau đó, dùng chính tham số cố định này để `.transform()` cho cả $X_{\text{train}}$ và $X_{\text{test}}$. Mô hình tuyệt đối không được tiếp cận bất kỳ thông tin thống kê nào của tập kiểm tra.
-   - *Kiểm chứng số học:* Tập $X_{\text{train\_scaled}}$ có $\text{Mean} = 0.0000$ và $\text{Std} = 1.0000$ (chuẩn hóa hoàn hảo); tập $X_{\text{test\_scaled}}$ có $\text{Mean} = 0.0012$ và $\text{Std} = 1.0164$ (có độ lệch tự nhiên vì tập Test đại diện cho dữ liệu tương lai chưa từng nhìn thấy).
+   - *Kiểm chứng số học:* Tập $X_{\text{train\_scaled}}$ có $\text{Mean} = 0.0000$ và $\text{Std} = 1.0000$ (chuẩn hóa hoàn hảo); tập $X_{\text{test\_scaled}}$ có $\text{Mean} = 0.0012$ và $\text{Std} = 1.0158$ (lệch nhẹ khỏi 0/1 là bình thường vì Scaler không được học từ tập Test).
 3. **Lưu trữ dữ liệu sạch:**
-   - Toàn bộ tập dữ liệu đã qua xử lý được lưu trữ thành 7 file CSV sạch trong thư mục `data/` (`hour_cleaned.csv`, `X_train.csv`, `X_test.csv`, `y_train.csv`, `y_test.csv`, `X_train_scaled.csv`, `X_test_scaled.csv`), sẵn sàng cho việc triển khai thực nghiệm mô hình ở Mục 5.
+   - Toàn bộ dữ liệu đã qua xử lý (**24 đặc trưng**) được lưu thành 8 file CSV trong thư mục `data/`: `hour_cleaned.csv`, `X_train.csv`, `X_test.csv`, `X_train_scaled.csv`, `X_test_scaled.csv`, `y_train.csv`, `y_test.csv` (`cnt` gốc) và `y_train_capped.csv` (chỉ dùng cho thí nghiệm kiểm chứng Capping).
 
 ---
 
@@ -608,7 +616,7 @@ Không gian dữ liệu gồm 22 chiều đặc trưng không thể quan sát b�
 
 # 5. EXPERIMENTS (THỰC NGHIỆM VÀ ĐÁNH GIÁ)
 
-Mục này trình bày toàn bộ ba thí nghiệm thực nghiệm được thiết kế tuần tự, từ việc chứng minh tác động của chất lượng dữ liệu, đến việc tối ưu hóa siêu tham số và đánh giá năng lực phân lớp. Mọi thực nghiệm đều thực thi trên cùng một môi trường (`Python 3.11+`, `scikit-learn 1.5+`, `XGBoost 2.1+`) và cùng tập dữ liệu phân chia cố định (`random_state=42`) nhằm đảm bảo tính tái tạo kết quả (Reproducibility) hoàn toàn.
+Mục này trình bày toàn bộ ba thí nghiệm thực nghiệm được thiết kế tuần tự, từ việc chứng minh tác động của chất lượng dữ liệu, đến việc tối ưu hóa siêu tham số và đánh giá năng lực phân lớp. Mọi thực nghiệm đều thực thi trên cùng một môi trường (Python 3, `scikit-learn`, `XGBoost` theo `requirements.txt`) và cùng tập dữ liệu phân chia cố định (`random_state=42`); tất cả mô hình đều được **đánh giá trên `cnt` gốc của cùng một tập Test** gồm 3,476 mẫu. Thời gian huấn luyện phụ thuộc cấu hình máy, chỉ có ý nghĩa so sánh tương đối.
 
 ---
 
@@ -617,67 +625,81 @@ Mục này trình bày toàn bộ ba thí nghiệm thực nghiệm được thi�
 **Mục tiêu:** Trả lời câu hỏi khoa học cốt lõi: *"Liệu giai đoạn Làm sạch, Kỹ thuật đặc trưng và Chuẩn hóa dữ liệu ở Mục 4 có cải thiện đáng kể hiệu năng mô hình hay không?"*
 
 **Thiết kế thực nghiệm đối chứng (Ablation Study):**
-- **Nhóm Đối chứng (Dữ liệu thô):** Đọc trực tiếp tệp `hour.csv` gốc, loại bỏ tối thiểu (chỉ xóa 4 cột rò rỉ: `instant`, `dteday`, `casual`, `registered`), chia Train/Test và huấn luyện mô hình ngay không qua bất kỳ bước tiền xử lý nào.
-- **Nhóm Thử nghiệm (Dữ liệu sạch):** Sử dụng toàn bộ pipeline tiền xử lý gồm 8 bước đã xây dựng tại Mục 4 (xử lý lỗi cảm biến, capping IQR, mã hóa $\sin/\cos$, `is_rush_hour`, One-Hot, K-Means, PCA, StandardScaler).
+- **Nhóm Đối chứng (Dữ liệu thô):** Đọc trực tiếp tệp `hour.csv` gốc, chỉ xóa 4 cột định danh/rò rỉ (`instant`, `dteday`, `casual`, `registered`); cố ý giữ `atemp` và 22 dòng `hum = 0`, không mã hóa, không chuẩn hóa – mô phỏng cách làm "đưa thẳng dữ liệu vào mô hình".
+- **Nhóm Thử nghiệm (Dữ liệu sạch):** Sử dụng toàn bộ quy trình tiền xử lý tại Mục 4 (xử lý lỗi cảm biến, mã hóa $\sin/\cos$, `is_rush_hour`, One-Hot, `hour_cluster`, StandardScaler).
+- **Điều kiện so sánh công bằng:** hai nhóm dùng **cùng một phép chia** 80/20 (cùng các dòng trong tập Test) và đều được đánh giá trên **`cnt` gốc**.
 
 **Kết quả Thí nghiệm 1:**
 
-| Thuật toán | RMSE (Thô) | RMSE (Sạch) | % Giảm RMSE | $R^2$ (Thô) | $R^2$ (Sạch) | Cải thiện $R^2$ |
+| Thuật toán | RMSE (Thô) | RMSE (Sạch) | % Giảm RMSE | $R^2$ (Thô) | $R^2$ (Sạch) | Thay đổi $R^2$ |
 |:--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Linear Regression** | 139.21 | 87.60 | **-37.1%** | 0.388 | 0.739 | **+90%** |
-| **kNN (k = 5, uniform)** | 52.74 | 58.16 | +10.3%* | 0.912 | 0.885 | -3.0% |
-| **AdaBoost Regressor** | 105.01 | 92.22 | **-12.2%** | 0.652 | 0.711 | +8.8% |
-| **ANN (MLPRegressor 3 lớp)** | 51.16 | 38.52 | **-24.7%** | 0.917 | 0.949 | **+3.5%** |
+| **Linear Regression** | 139.21 | 89.96 | **-35.4%** | 0.388 | 0.744 | **+0.356** |
+| **kNN (k = 5, uniform)** | 52.74 | 57.00 | +8.1%* | 0.912 | 0.897 | -0.015 |
+| **AdaBoost Regressor** | 105.01 | 100.36 | -4.4% | 0.652 | 0.682 | +0.030 |
+| **ANN (MLPRegressor 3 lớp)** | 51.16 | 40.72 | **-20.4%** | 0.917 | 0.948 | +0.030 |
 
 > [!NOTE]
-> *kNN với tham số mặc định (`weights='uniform'`) có RMSE tăng nhẹ 10.3% sau tiền xử lý do lỗi không gian khoảng cách Euclid trong 23 chiều đặc trưng (Lời nguyền chiều cao / Curse of Dimensionality). Vấn đề này được giải quyết ở Thí nghiệm 2 khi chuyển sang trọng số khoảng cách (`weights='distance'`) thông qua GridSearchCV, nâng $R^2$ lên 0.8939.
+> *kNN với tham số mặc định (`weights='uniform'`) có RMSE tăng 8.1% sau tiền xử lý. Nguyên nhân có thể là số chiều tăng từ 12 lên 24 và việc chuẩn hóa làm các biến nhị phân/One-Hot có trọng số ngang với các biến quan trọng như `hr`, khiến khoảng cách Euclid kém đặc trưng hơn. Ở Thí nghiệm 2, kNN với `weights='distance'` đạt $R^2 = 0.9051$.
 
 **Hình 5.1:** Biểu đồ đối chứng hiệu năng Dữ liệu thô vs. Dữ liệu sạch trên 4 thuật toán đại diện.
 
 ![Đối chứng Dữ liệu thô vs. Sạch](../output/step3_models_01_raw_vs_clean.png)
-*Hình 5.1: So sánh RMSE và $R^2$ trước và sau quy trình tiền xử lý toàn diện trên 4 thuật toán đại diện. Hồi quy tuyến tính (Linear Regression) đạt mức cải thiện ngoạn mục nhất với RMSE giảm 37.1% và $R^2$ tăng gần gấp đôi từ 0.388 lên 0.739.*
+*Hình 5.1: So sánh RMSE và $R^2$ trước và sau quy trình tiền xử lý trên 4 thuật toán đại diện. Hồi quy tuyến tính cải thiện nhiều nhất: RMSE giảm 35.4%, $R^2$ tăng từ 0.388 lên 0.744.*
 
 **Nhận xét:**
-- Kết quả thực nghiệm này khẳng định rằng **Giai đoạn Tiền xử lý và Kỹ thuật đặc trưng** là thành phần có giá trị gia tăng lớn nhất trong toàn bộ pipeline. Với mô hình tuyến tính, chất lượng đặc trưng quyết định tới **90% khả năng dự đoán** ($R^2$ từ 0.388 lên 0.739).
-- Phát hiện quan trọng: Mô hình ANN 3 lớp (`MLPRegressor`) đạt $R^2 = 0.949$ sau tiền xử lý nhưng **vẫn không vượt được XGBoost** ($R^2 = 0.9559$) — xác nhận rằng với bài toán chuỗi thời gian có quy luật tuần hoàn rõ ràng như nhu cầu thuê xe, Học máy cổ điển kết hợp Kỹ thuật đặc trưng tốt hoàn toàn cạnh tranh được với Mạng nơ-ron nhân tạo.
+- Tiền xử lý và kỹ thuật đặc trưng cải thiện rõ rệt **mô hình tuyến tính** ($R^2$ $0.388 \to 0.744$) – vốn không tự học được quan hệ phi tuyến của giờ trong ngày – và **mạng nơ-ron MLP** ($RMSE$ $51.2 \to 40.7$, chủ yếu nhờ chuẩn hóa thang đo; MLP dừng ở 300 vòng lặp khi chưa hội tụ hoàn toàn).
+- **AdaBoost** chỉ cải thiện nhẹ và vẫn có sai lệch hệ thống lớn ($MBE \approx +60$ xe/giờ), cho thấy cấu hình mặc định đang **underfitting** chứ không phải học vẹt ngoại lai. **kNN** giảm nhẹ. Như vậy, tác dụng của tiền xử lý **phụ thuộc vào từng thuật toán**, không cải thiện đồng đều cho mọi mô hình.
+- MLP đạt $R^2 = 0.948$ nhưng vẫn thấp hơn XGBoost ở Thí nghiệm 2 ($R^2 = 0.9538$), cho thấy với dữ liệu dạng bảng có quy luật tuần hoàn rõ ràng, mô hình cây kết hợp kỹ thuật đặc trưng tốt cạnh tranh tốt với mạng nơ-ron.
+
+**Kiểm chứng giả thuyết Capping ngoại lai:** nhóm em huấn luyện cùng mô hình trên `cnt` gốc và `cnt` đã Capping (ngưỡng IQR theo mùa học từ Train), luôn đánh giá trên `y_test` gốc.
+
+| Thuật toán | RMSE (`cnt` gốc) | RMSE (Capping) | $R^2$ (`cnt` gốc) | $R^2$ (Capping) |
+|:--- | :---: | :---: | :---: | :---: |
+| Linear Regression | 89.96 | 90.07 | 0.744 | 0.744 |
+| AdaBoost Regressor | 100.36 | 99.96 | 0.682 | 0.684 |
+| ANN (MLPRegressor 3 lớp) | **40.72** | 43.91 | **0.948** | 0.939 |
+
+Capping gần như không thay đổi kết quả của Linear Regression và AdaBoost, và làm **MLP kém đi** (mô hình bị "dạy" rằng nhu cầu không vượt quá ngưỡng trần nên dự đoán thấp hơn thực tế ở giờ cao điểm). Giả thuyết "ngoại lai làm mô hình học vẹt, cần cắt trần" **không được thực nghiệm ủng hộ**; nhóm em giữ `cnt` gốc cho các thí nghiệm tiếp theo.
 
 ---
 
-## 5.2. Thí nghiệm 2: 5-Fold Cross Validation và Tinh chỉnh siêu tham số (GridSearchCV) trên 8 mô hình Hồi quy cốt lõi
+## 5.2. Thí nghiệm 2: 5-Fold Cross Validation và Tinh chỉnh siêu tham số (GridSearchCV) trên 9 cấu hình mô hình Hồi quy
 
 **Mục tiêu:** Tìm ra mô hình hồi quy tốt nhất với tham số tối ưu và đánh giá toàn diện theo đầy đủ các độ đo học thuật.
 
 **Thiết kế thực nghiệm:**
 - **Chiến lược kiểm định chéo:** `KFold(n_splits=5, shuffle=True, random_state=42)` nhằm đảm bảo mọi điểm dữ liệu đều được dùng làm tập kiểm định đúng một lần.
 - **Tối ưu hóa siêu tham số:** `GridSearchCV(scoring='neg_mean_squared_error', n_jobs=-1)` với lưới tham số gọn gàng 4–6 tổ hợp tiêu biểu cho mỗi mô hình.
-- **Tập đặc trưng:** 23 đặc trưng sạch sau tiền xử lý, tập kiểm thử độc lập 3,476 mẫu hoàn toàn chưa tham gia quá trình huấn luyện hay tối ưu hóa.
+- **Tập đặc trưng:** 24 đặc trưng sạch sau tiền xử lý, tập kiểm thử độc lập 3,476 mẫu hoàn toàn chưa tham gia quá trình huấn luyện hay tối ưu hóa.
 
 **Hình 5.2:** Đường cong kiểm định (Validation Curve) minh họa sự đánh đổi Bias-Variance.
 
 ![Validation Curve Bias-Variance](../output/step3_models_02_bias_variance.png)
-*Hình 5.2: (a) Validation Curve của Cây quyết định CART theo độ sâu `max_depth` — minh họa rõ nét ba vùng: Underfitting (High Bias, $depth \le 5$), Sweet Spot ($depth \approx 11-15$) và Overfitting (High Variance, $depth > 15$). (b) Validation Curve của Ridge Regression theo hệ số điều chuẩn L2 `alpha` — xác nhận $\alpha^* = 10.0$ là điểm cân bằng tối ưu.*
+*Hình 5.2: (a) Validation Curve của Cây quyết định CART theo độ sâu `max_depth`: Underfitting khi cây nông ($depth \le 7$), sai số CV chạm đáy khoảng $58.8$ xe/giờ quanh $depth = 15$ rồi đi ngang, trong khi sai số Train tiếp tục giảm về gần 0 (Overfitting). (b) Validation Curve của Ridge Regression theo hệ số điều chuẩn L2 `alpha`: sai số CV gần như không đổi ($\approx 92.9$) cho tới $\alpha \approx 100$ và chỉ tăng khi phạt quá mạnh.*
 
-**Bảng 5.2: Tổng hợp kết quả Thí nghiệm 2** (8 mô hình Hồi quy cốt lõi — đánh giá trên tập kiểm thử độc lập $N_{test} = 3,476$ mẫu):
+**Bảng 5.2: Tổng hợp kết quả Thí nghiệm 2** (9 cấu hình mô hình Hồi quy — đánh giá trên tập kiểm thử độc lập $N_{test} = 3,476$ mẫu; bảng đầy đủ tại `output/model_comparison.csv`):
 
 | STT | Mô hình | Tham số tối ưu | CV-RMSE | MAE | RMSE | MBE | $R^2$ | Thời gian (s) |
 |:---:|:--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| 1 | Simple Linear Regression | `feature: hr_sin` | 159.71 | 119.97 | 154.77 | +4.62 | 0.1848 | 2.20 |
-| 2 | Multiple Linear Regression | Toàn bộ 23 đặc trưng | 90.02 | 67.33 | 87.60 | +2.84 | 0.7389 | 1.52 |
-| 3 | Ridge Regression (L2) | `alpha = 10.0` | 90.02 | 67.33 | 87.60 | +2.84 | 0.7388 | 1.52 |
-| 4 | Lasso Regression (L1) | `alpha = 0.01` | 90.02 | 67.32 | 87.60 | +2.84 | 0.7389 | 0.59 |
-| 5 | kNN Regressor | `k=7, weights='distance'` | 59.25 | 38.55 | 55.83 | +0.82 | 0.8939 | 0.56 |
-| 6 | SVR (Kernel RBF) | `C=15, gamma=0.05` | 57.67 | 35.13 | 53.77 | -4.35 | 0.9016 | 47.13 |
-| 7 | CART Decision Tree | `max_depth=15, min_split=10` | 52.44 | 30.15 | 50.15 | +0.14 | 0.9144 | 0.34 |
-| 8 | Random Forest (Bagging) | `n_est=150, max_depth=20` | 41.78 | 23.26 | 38.34 | +1.20 | 0.9500 | 7.89 |
-| **9** | **XGBoost (Boosting)** | **`n_est=150, max_depth=7, lr=0.1`** | **39.39** | **22.42** | **36.01** | **+0.43** | **0.9559** | **3.93** |
+| 1 | Simple Linear Regression | `feature: hr_sin` | 166.60 | 123.20 | 160.77 | +4.92 | 0.1837 | 14.67 |
+| 2 | Multiple Linear Regression | Toàn bộ 24 đặc trưng | 92.90 | 68.16 | 89.96 | +3.22 | 0.7444 | 9.24 |
+| 3 | Ridge Regression (L2) | `alpha = 10.0` | 92.90 | 68.15 | 89.97 | +3.22 | 0.7444 | 0.30 |
+| 4 | Lasso Regression (L1) | `alpha = 0.01` | 92.90 | 68.15 | 89.96 | +3.22 | 0.7444 | 0.68 |
+| 5 | kNN Regressor | `k=5, weights='distance'` | 58.52 | 37.41 | 54.81 | +1.66 | 0.9051 | 3.22 |
+| 6 | SVR (Kernel RBF) | `C=15, gamma=0.05` | 55.89 | 33.25 | 51.98 | -3.87 | 0.9147 | 123.27 |
+| 7 | CART Decision Tree | `max_depth=20, min_split=10` | 55.32 | 30.24 | 49.67 | +1.62 | 0.9221 | 0.97 |
+| 8 | Random Forest (Bagging) | `n_est=150, max_depth=20` | 43.59 | 24.07 | 39.99 | +1.80 | 0.9495 | 43.45 |
+| **9** | **XGBoost (Boosting)** | **`n_est=150, max_depth=7, lr=0.1`** | **40.29** | **23.25** | **38.27** | **+1.02** | **0.9538** | **9.29** |
+
+*Ghi chú: thời gian là tổng thời gian GridSearchCV (gồm cả 5-Fold CV) trong một lần chạy, phụ thuộc cấu hình máy; hai dòng hồi quy tuyến tính không có lưới tham số nhưng thời gian cao hơn Ridge/Lasso do chi phí khởi tạo xử lý song song.*
 
 **Nhận xét theo 3 tiêu chí học thuật:**
 
-1. **Khả năng giải thích (Interpretability):** Hồi quy tuyến tính (OLS, Ridge, Lasso) có khả năng giải thích cao nhất — từ hệ số hồi quy $\hat{\beta}$ có thể suy ra trực tiếp mức độ ảnh hưởng đơn vị của từng đặc trưng. Đây là ưu điểm quyết định khi nhà quản lý cần giải trình quyết định điều phối xe với cơ quan. Tuy nhiên, năng lực dự đoán chỉ đạt $R^2 \approx 0.739$ — ngưỡng trần của bài toán phi tuyến với đặc trưng tuyến tính.
+1. **Khả năng giải thích (Interpretability):** Hồi quy tuyến tính (OLS, Ridge, Lasso) có khả năng giải thích cao nhất — từ hệ số hồi quy $\hat{\beta}$ có thể suy ra trực tiếp mức độ ảnh hưởng của từng đặc trưng. Tuy nhiên, năng lực dự đoán chỉ đạt $R^2 \approx 0.744$. Validation Curve cho thấy điều chuẩn L2/L1 **không cải thiện đáng kể** vì số mẫu ($\approx 13,900$) lớn hơn rất nhiều so với số đặc trưng (24): giới hạn của nhóm tuyến tính nằm ở **bias** (không biểu diễn được quan hệ phi tuyến), không phải variance.
 
-2. **Thời gian tính toán (Computational Efficiency):** Lasso ($0.59$s), CART ($0.34$s) và kNN ($0.56$s) gần như huấn luyện tức thì. **XGBoost** nổi bật khi vừa đạt hiệu năng dự đoán tốt nhất ($R^2 = 0.9559$) với thời gian huấn luyện chỉ $3.93$s — hiệu quả tính toán cực kỳ cao so với SVR ($47.13$s mà $R^2 = 0.9016$, kém hơn rõ rệt). Random Forest cần $7.89$s và $R^2 = 0.9500$, đứng thứ hai toàn diện.
+2. **Thời gian tính toán (Computational Efficiency):** Ridge, Lasso, CART huấn luyện gần như tức thì (dưới 1 giây). **XGBoost** vừa đạt hiệu năng dự đoán tốt nhất vừa chỉ mất khoảng 10 giây cho toàn bộ lưới tham số, nhanh hơn nhiều so với SVR (khoảng 2 phút mà $R^2 = 0.9147$, thấp hơn) và Random Forest (dưới 1 phút, $R^2 = 0.9495$, đứng thứ hai).
 
-3. **Sức mạnh dự đoán (Predictive Power):** Có sự phân hóa rõ ràng giữa 3 nhóm thuật toán: (i) **Nhóm Tuyến tính** ($R^2 \in [0.18, 0.74]$), (ii) **Nhóm Phi tuyến đơn lẻ** ($R^2 \in [0.89, 0.91]$), và (iii) **Nhóm Kết hợp Cây (Ensemble)** ($R^2 \in [0.95, 0.96]$). Khoảng cách 20 điểm phần trăm $R^2$ giữa nhóm Tuyến tính và Ensemble cho thấy quan hệ giữa thời tiết, thời gian và nhu cầu thuê xe mang bản chất **phi tuyến phức tạp** mà các biến đổi lượng giác $\sin/\cos$ vẫn chưa phải đủ để tuyến tính hóa hoàn toàn.
+3. **Sức mạnh dự đoán (Predictive Power):** Có sự phân hóa rõ giữa 3 nhóm: (i) **Nhóm Tuyến tính** ($R^2 \in [0.18, 0.74]$), (ii) **Nhóm Phi tuyến đơn lẻ** – kNN, SVR, CART ($R^2 \in [0.90, 0.92]$), và (iii) **Nhóm Kết hợp Cây (Ensemble)** ($R^2 \approx 0.95$). XGBoost giảm $57.5\%$ RMSE so với hồi quy tuyến tính đa biến. Khoảng cách hơn 20 điểm phần trăm $R^2$ giữa nhóm Tuyến tính và Ensemble cho thấy quan hệ giữa thời tiết, thời gian và nhu cầu thuê xe mang bản chất **phi tuyến** mà các đặc trưng $\sin/\cos$, `is_rush_hour` chưa đủ để tuyến tính hóa hoàn toàn. Sai số CV và sai số Test của các mô hình khá gần nhau, cho thấy kết quả ổn định.
 
 ---
 
@@ -693,16 +715,18 @@ Mục này trình bày toàn bộ ba thí nghiệm thực nghiệm được thi�
 
 | Mô hình | Accuracy | Precision | Recall | F1-Score | ROC-AUC | Thời gian (s) |
 |:--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| Logistic Regression | 90.30% | 89.68% | 90.58% | 0.9013 | 0.9651 | 0.18 |
-| Gaussian Naïve Bayes | 86.13% | 85.56% | 86.16% | 0.8586 | 0.9226 | 0.00 |
-| **SVC (Kernel RBF)** | **94.33%** | **94.54%** | **93.82%** | **0.9418** | **0.9877** | 6.00 |
-| CART Decision Tree | 92.06% | 91.00% | 92.93% | 0.9196 | 0.9610 | 0.03 |
+| Logistic Regression | 90.51% | 89.54% | 91.22% | 0.9037 | 0.9655 | 0.08 |
+| Gaussian Naïve Bayes | 85.87% | 85.73% | 85.28% | 0.8550 | 0.9135 | 0.01 |
+| **SVC (Kernel RBF)** | **94.36%** | **94.54%** | **93.88%** | **0.9421** | **0.9874** | 13.20 |
+| CART Decision Tree | 92.17% | 90.93% | 93.29% | 0.9209 | 0.9677 | 0.05 |
 
 ![ROC-AUC và Confusion Matrix](../output/step3_models_03_classification_roc.png)
-*Hình 5.3: (a) Đường cong ROC của 4 mô hình phân lớp — SVC áp sát góc $(0,1)$ lý tưởng với $AUC = 0.9877$; Logistic Regression đạt $AUC = 0.9651$ với thời gian huấn luyện $0.18$s. (b) Ma trận nhầm lẫn (Confusion Matrix) 2×2 của từng mô hình — SVC chỉ nhầm lẫn 197/3,476 mẫu.*
+*Hình 5.3: (a) Đường cong ROC của 4 mô hình phân lớp — SVC có diện tích lớn nhất ($AUC = 0.9874$). (b) Ma trận nhầm lẫn (Confusion Matrix) 2×2 của từng mô hình — SVC phân loại sai 196/3,476 mẫu (khoảng 92 dương tính giả và 104 âm tính giả).*
 
 **Nhận xét:**
-Toàn bộ 4 đường cong ROC đều lồi mạnh về góc trên trái $(0, 1)$, khẳng định năng lực phân loại vượt xa ngưỡng ngẫu nhiên ($AUC = 0.5$). **SVC** dẫn đầu với $ROC\text{-}AUC = 0.9877$ và $F1 = 0.9418$, đủ đảm bảo độ tin cậy cho ứng dụng thực tế: nhà quản lý có thể tự động kích hoạt cảnh báo "Nhu cầu Cao" trước nhiều giờ với tỷ lệ sai sót chỉ $5.67\%$.
+- Cả 4 đường cong ROC đều nằm xa đường chéo ngẫu nhiên ($AUC = 0.5$). **SVC** dẫn đầu với $ROC\text{-}AUC = 0.9874$ và $F1 = 0.9421$, nhưng tốn thời gian huấn luyện lâu nhất (do `probability=True` cần kiểm định chéo nội bộ). **CART** ($AUC = 0.9677$) và **Logistic Regression** ($AUC = 0.9655$) bám sát phía sau; Logistic Regression huấn luyện chưa đến 1 giây.
+- **Gaussian Naïve Bayes** thấp nhất ($AUC = 0.9135$, $F1 = 0.8550$), phù hợp với việc giả định độc lập có điều kiện không thỏa mãn: nhiều đặc trưng có liên hệ chặt với nhau (`hr`, `hr_sin`, `hr_cos`, `is_rush_hour`, `hour_cluster`).
+- **Ý nghĩa thực tế và giới hạn:** mô hình phân lớp có thể hỗ trợ cảnh báo khung giờ "Nhu cầu Cao" (tỷ lệ phân loại sai của SVC khoảng $5.6\%$). Tuy nhiên, mô hình dùng điều kiện thời tiết **tại chính giờ cần dự đoán**, nên khi áp dụng thực tế cần dữ liệu dự báo thời tiết và độ chính xác khi đó có thể thấp hơn kết quả thí nghiệm.
 
 ---
 
@@ -711,30 +735,33 @@ Toàn bộ 4 đường cong ROC đều lồi mạnh về góc trên trái $(0, 1
 **Hình 5.4:** Phân tích độ bám sát dự đoán của mô hình XGBoost tốt nhất.
 
 ![Thực tế vs. Dự đoán](../output/step3_models_04_actual_vs_pred.png)
-*Hình 5.4: (a) Biểu đồ phân tán Thực tế vs. Dự đoán của XGBoost — đám mây điểm bám khít đường lý tưởng $y=x$ xuyên suốt toàn dải từ 0 đến 800 xe/giờ, $MAE = 22.42$ xe/giờ. (b) Chuỗi thời gian theo dõi liên tục 120 giờ (5 ngày) — đường XGBoost (xanh đứt nét) bắt chính xác từng đỉnh cao điểm sáng/chiều và đáy ban đêm, trong khi Hồi quy tuyến tính (cam chấm) thường xuyên bị trễ pha và ước lượng âm ban đêm.*
+*Hình 5.4: (a) Biểu đồ phân tán Thực tế vs. Dự đoán của XGBoost — các điểm tập trung quanh đường $y=x$ ($R^2 = 0.9538$, $RMSE = 38.27$, $MAE = 23.25$ xe/giờ); độ phân tán tăng ở dải nhu cầu cao trên 500 xe/giờ. (b) So sánh trên 120 mẫu của tập Test — đường XGBoost (xanh đứt nét) bám sát giá trị thực tế ở cả đỉnh và đáy, trong khi Hồi quy tuyến tính (cam chấm) lệch nhiều hơn và có lúc cho ra giá trị âm. Do tập Test được chia ngẫu nhiên, 120 mẫu này **không phải 120 giờ liên tục**.*
 
 **Hình 5.5:** Tầm quan trọng của các đặc trưng trong mô hình XGBoost.
 
 ![Feature Importance](../output/step3_models_05_feature_importance.png)
-*Hình 5.5: Xếp hạng tầm quan trọng đặc trưng (Feature Importance) của XGBoost — Nhóm đặc trưng thời gian (`hour_cluster`, `is_rush_hour`, `hr_sin`, `hr_cos`) chiếm hơn 60% tổng tỷ trọng; nhiệt độ (`temp`) là yếu tố thời tiết ảnh hưởng lớn nhất (~14%).*
+*Hình 5.5: Xếp hạng tầm quan trọng đặc trưng (Feature Importance) của XGBoost — `is_rush_hour` (39.1%), `hour_cluster_1` (19.2%) và `hr` (11.0%) đứng đầu; nhóm thời tiết có tỷ trọng nhỏ hơn.*
 
 **Nhận xét về tầm quan trọng đặc trưng:**
-- **Nhóm đặc trưng chu kỳ thời gian** (`hour_cluster`, `is_rush_hour`, `hr_sin`, `hr_cos`) chiếm hơn **60% tổng trọng số đóng góp**, khẳng định nhịp sinh học đi lại theo giờ là động lực cốt lõi nhất quyết định nhu cầu thuê xe. Đây là minh chứng định lượng thực nghiệm cho nhận định định tính từ giai đoạn EDA.
-- **Nhóm đặc trưng khí tượng**: Nhiệt độ (`temp`, ~14%) và Độ ẩm (`hum`, ~8%) là hai yếu tố thời tiết ảnh hưởng lớn nhất, nhất quán với ma trận tương quan Pearson ($r_{temp,cnt} = +0.405$) ở Mục 4.
-- Đặc trưng mới được tạo ra qua K-Means (`hour_cluster`) đứng đầu danh sách — xác nhận rằng kỹ thuật phân cụm hành vi 24 giờ đã mang lại tín hiệu phân tách mạnh mẽ mà các đặc trưng gốc không có.
+- **Nhóm đặc trưng thời gian chiếm ưu thế:** `is_rush_hour` ($39.1\%$), `hour_cluster_1` ($19.2\%$), `hr` ($11.0\%$) và `workingday` ($6.9\%$) chiếm tổng cộng khoảng **$76\%$**. Hai đặc trưng do nhóm em tạo ra (`is_rush_hour`, `hour_cluster`) đứng đầu, cho thấy kỹ thuật đặc trưng dựa trên EDA có đóng góp thực sự cho mô hình.
+- **Xu hướng theo năm** (`yr`, $6.5\%$) phản ánh lượng người dùng năm 2012 tăng so với 2011.
+- **Nhóm đặc trưng khí tượng** có tỷ trọng nhỏ hơn: `temp` ($3.2\%$), `season_4` ($3.0\%$), `weathersit_3` – mưa nhỏ/tuyết ($2.2\%$), `hum` ($0.9\%$), `windspeed` ($0.2\%$).
+- *Lưu ý khi diễn giải:* độ quan trọng trong XGBoost bị **chia sẻ giữa các đặc trưng tương quan** (`hr`, `hr_sin`, `hr_cos`, `is_rush_hour`, `hour_cluster` cùng mang thông tin về giờ; `temp`, `season`, `mnth` cùng mang thông tin về mùa). Vì vậy tỷ trọng nhỏ của `temp` không có nghĩa nhiệt độ ít ảnh hưởng – kiểm định F-test (Mục 4.11) và tương quan Pearson ($r_{temp,cnt} = +0.405$) cho thấy nhiệt độ là yếu tố thời tiết có quan hệ mạnh nhất với nhu cầu thuê xe.
 
 ---
 
 ## 5.5. Thảo luận về Hạn chế của Dữ liệu và Mô hình
 
-Mặc dù kết quả thực nghiệm đạt mức $R^2 = 0.9559$ (XGBoost) rất khả quan, nhóm em nhận thức rõ các hạn chế sau đây để đảm bảo tính khoa học và khách quan của nghiên cứu:
+Mặc dù kết quả thực nghiệm đạt mức $R^2 = 0.9538$ (XGBoost) rất khả quan, nhóm em nhận thức rõ các hạn chế sau đây để đảm bảo tính khoa học và khách quan của nghiên cứu:
 
 | Hạn chế | Mô tả chi tiết | Hướng khắc phục trong tương lai |
 |:--- | :--- | :--- |
 | **Tính đại diện địa lý** | Toàn bộ 17,379 quan sát chỉ từ **một thành phố** (Washington D.C.) trong **2 năm** (2011–2012). Mô hình chưa được kiểm chứng tính tổng quát hóa (Generalizability) ở các thành phố khác như Hà Nội, TP. Hồ Chí Minh. | Thu thập dữ liệu từ nhiều thành phố khác nhau; sử dụng kỹ thuật Transfer Learning để thích ứng mô hình. |
 | **Tính tĩnh của mô hình** | Mô hình được huấn luyện offline (Batch Learning). Nhu cầu thuê xe thực tế biến đổi theo xu hướng dài hạn (khai trương trạm mới, biến cố đặc biệt như dịch bệnh, lễ hội bất thường) mà mô hình tĩnh không tự cập nhật được. | Áp dụng Online Learning hoặc lịch trình tái huấn luyện định kỳ (Retraining Schedule). |
 | **Độ phân giải thời gian** | Dữ liệu được tổng hợp theo đơn vị giờ. Trong thực tế vận hành, nhu cầu có thể biến động mạnh trong vòng 15–30 phút (giờ tan tầm đột ngột mưa to). | Thu thập dữ liệu ở độ phân giải 15 phút; áp dụng mô hình chuỗi thời gian ARIMA hoặc RNN/LSTM. |
-| **Lỗi cảm biến chưa được gán nhãn** | 22 bản ghi lỗi cảm biến độ ẩm ($hum = 0$) được xử lý bằng cách loại bỏ. Trong hệ thống thực tế, lỗi cảm biến có thể xảy ra thường xuyên hơn và với các dạng lỗi khó phát hiện hơn (ví dụ: giá trị bị kẹt tại một mức hằng số). | Tích hợp hệ thống phát hiện bất thường dữ liệu (Anomaly Detection) trước khi đưa vào pipeline dự báo. |
+| **Chia ngẫu nhiên trên dữ liệu chuỗi thời gian** | Tập Train/Test được chia ngẫu nhiên theo giờ, nên các giờ liền kề của cùng một ngày có thể nằm ở cả hai tập. Mô hình vì vậy được "nhìn thấy" bối cảnh rất gần với mẫu kiểm tra, khiến các độ đo có thể **lạc quan hơn** so với tình huống dự báo tương lai thực sự. | Bổ sung thí nghiệm chia theo thời gian (huấn luyện trên giai đoạn trước, kiểm tra trên giai đoạn sau) hoặc dùng `TimeSeriesSplit` cho kiểm định chéo. |
+| **Thời tiết tại thời điểm dự đoán** | Các mô hình dùng điều kiện thời tiết đo được tại chính giờ cần dự đoán. Khi triển khai thực tế, giá trị này chỉ có dưới dạng dự báo thời tiết (có sai số). | Huấn luyện và đánh giá với dữ liệu dự báo thời tiết thay vì giá trị đo thực tế. |
+| **Lỗi cảm biến chưa được gán nhãn** | 22 bản ghi lỗi cảm biến độ ẩm ($hum = 0$) được điền khuyết bằng trung vị theo (tháng, giờ) học từ tập Train. Trong hệ thống thực tế, lỗi cảm biến có thể xảy ra thường xuyên hơn và với các dạng lỗi khó phát hiện hơn (ví dụ: giá trị bị kẹt tại một mức hằng số). | Tích hợp hệ thống phát hiện bất thường dữ liệu (Anomaly Detection) trước khi đưa vào pipeline dự báo. |
 
 ---
 
@@ -749,11 +776,12 @@ Mặc dù kết quả thực nghiệm đạt mức $R^2 = 0.9559$ (XGBoost) rấ
 **Về mặt phương pháp luận:** Nhóm em đã xây dựng và thực thi thành công quy trình **7 bước Học máy cổ điển** một cách toàn diện, minh bạch và tái tạo được, từ giai đoạn kiểm toán chất lượng dữ liệu (Know Your Data) đến giai đoạn triển khai hàm dự đoán cho dữ liệu thực tế mới. Quy trình này tuyệt đối tuân thủ nguyên tắc không "hộp đen" (non-black-box) và chống rò rỉ dữ liệu (Zero Data Leakage).
 
 **Về mặt thực nghiệm hồi quy:** Trên tập kiểm thử độc lập $N_{test} = 3,476$ mẫu giờ:
-- **Mô hình tốt nhất: XGBoost** với các tham số tối ưu `{n_estimators=150, max_depth=7, learning_rate=0.1}` đạt $R^2 = 0.9559$, $RMSE = 36.01$ xe/giờ, $MAE = 22.42$ xe/giờ — có nghĩa là mô hình dự đoán nhu cầu thuê xe chính xác trong biên độ sai số trung bình chỉ **±22 xe mỗi giờ** trên nền tảng nhu cầu trung bình 189.5 xe/giờ (sai số tương đối ~11.8%).
-- **Hiệu quả của Pipeline tiền xử lý:** Quy trình tiền xử lý toàn diện đã giảm RMSE của Linear Regression từ $139.21$ xuống $87.60$ xe/giờ (**giảm 37.1%**) và cải thiện $R^2$ gần **gấp đôi** từ $0.388$ lên $0.739$.
-- **Phát hiện đặc trưng quan trọng:** Nhóm đặc trưng thời gian (`hour_cluster`, `is_rush_hour`, $hr_{sin}/hr_{cos}$) chiếm hơn **60% tỷ trọng đóng góp** trong mô hình XGBoost, nhất quán với nhận định EDA về chu kỳ sinh hoạt ngày/đêm.
+- **Mô hình tốt nhất: XGBoost** với các tham số tối ưu `{n_estimators=150, max_depth=7, learning_rate=0.1}` đạt $R^2 = 0.9538$, $RMSE = 38.27$ xe/giờ, $MAE = 23.25$ xe/giờ — sai số tuyệt đối trung bình khoảng **23 xe mỗi giờ** trên nền nhu cầu trung bình 189.5 xe/giờ (khoảng 12.3%).
+- **Hiệu quả của quy trình tiền xử lý:** trên cùng tập Test và cùng `cnt` gốc, tiền xử lý giảm RMSE của Linear Regression từ $139.21$ xuống $89.96$ xe/giờ (**giảm 35.4%**), $R^2$ tăng từ $0.388$ lên $0.744$; tác dụng khác nhau giữa các thuật toán (kNN giảm nhẹ).
+- **Xử lý ngoại lai dựa trên bằng chứng:** thí nghiệm kiểm chứng cho thấy Capping ngoại lai không cải thiện mô hình (còn làm MLP kém đi), nên các nhu cầu cao được giữ nguyên như hành vi thực tế.
+- **Phát hiện đặc trưng quan trọng:** nhóm đặc trưng thời gian (`is_rush_hour`, `hour_cluster`, `hr`, `workingday`) chiếm khoảng **76% tỷ trọng đóng góp** trong mô hình XGBoost, nhất quán với nhận định EDA về chu kỳ đi làm – nghỉ ngơi.
 
-**Về mặt thực nghiệm phân lớp:** Mô hình **SVC (Kernel RBF)** dẫn đầu với $Accuracy = 94.33\%$, $F1\text{-}Score = 0.9418$ và $ROC\text{-}AUC = 0.9877$ — đủ độ tin cậy để triển khai thực tế như một hệ thống cảnh báo "Nhu cầu Cao" tự động.
+**Về mặt thực nghiệm phân lớp:** Mô hình **SVC (Kernel RBF)** dẫn đầu với $Accuracy = 94.36\%$, $F1\text{-}Score = 0.9421$ và $ROC\text{-}AUC = 0.9874$, cho thấy tiềm năng làm nền tảng cho hệ thống cảnh báo "Nhu cầu Cao", với điều kiện được kiểm chứng thêm trên dữ liệu dự báo thời tiết và cách chia dữ liệu theo thời gian (Mục 5.5).
 
 ## 6.2. Hướng nghiên cứu và Mở rộng trong tương lai
 
