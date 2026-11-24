@@ -1,0 +1,10 @@
+Model,Best_Params,CV_RMSE_5Fold,MAE,MSE,RMSE,MBE,R2_Score,Fit_Time_Seconds
+Simple Linear Regression,feature: hr_sin,159.71,119.97,23954.18,154.77,4.62,0.1848,2.2
+Multiple Linear Regression,all 23 features,90.02,67.33,7673.8,87.6,2.84,0.7389,1.52
+Ridge Regression (L2),{'alpha': 10.0},90.02,67.33,7674.08,87.6,2.84,0.7388,1.52
+Lasso Regression (L1),{'alpha': 0.01},90.02,67.32,7673.45,87.6,2.84,0.7389,0.59
+kNN Regressor,"{'n_neighbors': 7, 'weights': 'distance'}",59.25,38.55,3116.54,55.83,0.82,0.8939,0.56
+Support Vector Regression (SVR),"{'C': 15, 'gamma': 0.05}",57.67,35.13,2891.75,53.77,-4.35,0.9016,47.13
+CART Decision Tree,"{'max_depth': 15, 'min_samples_split': 10}",52.44,30.15,2514.78,50.15,0.14,0.9144,0.34
+Random Forest (Bagging),"{'max_depth': 20, 'n_estimators': 150}",41.78,23.26,1470.03,38.34,1.2,0.95,7.89
+XGBoost (Boosting),"{'learning_rate': 0.1, 'max_depth': 7, 'n_estimators': 150}",39.39,22.42,1296.38,36.01,0.43,0.9559,3.93
