@@ -46,8 +46,14 @@
   * 4.5. Phân tích Ma trận tương quan, Hiện tượng Đa cộng tuyến và Rò rỉ dữ liệu ......... Trang 13
   * 4.6. Phân tích tác động của Điều kiện Thời tiết (Boxplot + Scatter Plot 2×2) .......... Trang 13
   * 4.7. Heatmap tương tác Giờ × Loại thời tiết (hr × weathersit) ........................ Trang 13
-* **5. EXPERIMENTS (THỰC NGHIỆM & ĐÁNH GIÁ)** ........................................... *(Bước 20 – 24)*
-* **6. CONCLUSION & 7. REFERENCES** ................................................................ *(Bước 25)*
+  * 4.8. Khung phương pháp luận: Quy trình 7 bước của Học máy cổ điển ............. Trang 14
+  * 4.9. Làm sạch dữ liệu và Xử lý lỗi cảm biến ..................................................... Trang 14
+  * 4.10. Kỹ thuật tạo đặc trưng (Capping IQR, Mã hóa chu kỳ, One-Hot) ............ Trang 15
+  * 4.11. Đánh giá và Chọn lọc đặc trưng bằng Kiểm định Thống kê ....................... Trang 15
+  * 4.12. Phân cụm K-Means cho 24 Khung giờ và Giảm chiều dữ liệu bằng PCA ..... Trang 16
+  * 4.13. Phân chia tập dữ liệu và Chuẩn hóa Zero Data Leakage ............................ Trang 16
+* **5. EXPERIMENTS (THỰC NGHIỆM & ĐÁNH GIÁ)** ........................................... Trang 17 – 23
+* **6. CONCLUSION & 7. REFERENCES** ................................................................ Trang 24 – 25
 
 ---
 
@@ -84,9 +90,9 @@ Bám sát quy trình **7 bước chuẩn mực của Học máy cổ điển** �
 2. **Khám phá và Biến đổi phân phối:** Phân tích Histogram chỉ ra biến mục tiêu $cnt$ bị lệch phải nghiêm trọng ($\text{Mean } 189.5 > \text{Median } 142.0$), từ đó ứng dụng hàm biến đổi $y' = \ln(1 + y)$ (`log1p`) kéo phân phối về dạng hình chuông cân đối.
 3. **Phát hiện ngoại lai & Đa cộng tuyến:** Sử dụng biểu đồ Hộp (Boxplot) và phương pháp IQR thống kê chính xác **478 điểm ngoại lai** (2.75%), làm rõ nguy cơ gây hiện tượng học vẹt (Overfitting) cho thuật toán AdaBoost. Phân tích tương quan Pearson vạch trần hiện tượng **Đa cộng tuyến hoàn hảo** giữa $temp$ và $atemp$ ($r \approx 0.99$) làm suy biến ma trận hiệp phương sai, đồng thời cảnh báo nguy cơ **Rò rỉ dữ liệu (Data Leakage)** từ công thức $cnt = casual + registered$.
 4. **Kỹ thuật đặc trưng & Chuẩn hóa:** Đề xuất tạo mới đặc trưng chu kỳ thời gian $\text{is\_rush\_hour}$, mã hóa lượng giác $\sin/\cos$, phân cụm K-Means hành vi thuê xe và chuẩn hóa không rò rỉ dữ liệu (chỉ `.fit()` trên tập huấn luyện $X_{train}$).
-5. **Thực nghiệm đối sánh:** Triển khai quy trình kiểm định chéo 5-Fold Cross Validation và Grid Search trên 8 mô hình hồi quy cốt lõi (OLS, Ridge, Lasso, kNN, SVR, Decision Tree, Random Forest, AdaBoost/XGBoost/LightGBM) và 4 mô hình phân lớp nhu cầu Cao/Thấp.
+5. **Thực nghiệm đối sánh:** Triển khai quy trình kiểm định chéo 5-Fold Cross Validation và Grid Search trên 8 mô hình hồi quy cốt lõi (OLS, Ridge, Lasso, kNN, SVR, Decision Tree, Random Forest, AdaBoost, XGBoost) và 4 mô hình phân lớp nhu cầu Cao/Thấp.
 
-*(Khung kết quả thực nghiệm tối ưu sẽ được tổng kết và cập nhật đầy đủ các chỉ số $R^2$, RMSE, MAE, F1-Score tại Bước 25 sau khi hoàn thành toàn bộ các thực nghiệm).*
+*(Khung kết quả thực nghiệm tối ưu sẽ được tổng kết và cập nhật đầy đủ các chỉ số $R^2$, RMSE, MAE, F1-Score sau khi hoàn thành toàn bộ các thực nghiệm ở Mục 5).*
 
 ---
 
@@ -247,7 +253,7 @@ CART phân chia không gian đặc trưng đệ quy thành các siêu hình hộ
 
 #### 2. Đối chiếu hai trường phái Học kết hợp: Bagging vs Boosting
 
-| Tiêu chí so sánh | Bagging (Đại diện: Random Forest) | Boosting (Đại diện: AdaBoost, XGBoost, LightGBM) |
+| Tiêu chí so sánh | Bagging (Đại diện: Random Forest) | Boosting (Đại diện: AdaBoost, XGBoost) |
 | :--- | :--- | :--- |
 | **Cơ chế cốt lõi** | Huấn luyện **Song song** các cây độc lập. | Huấn luyện **Tuần tự nối tiếp**, cây sau sửa sai cho cây trước. |
 | **Kỹ thuật dữ liệu** | **Bootstrap Aggregating:** Lấy mẫu ngẫu nhiên có lặp lại từ tập dữ liệu gốc. | Điều chỉnh phân phối trọng số mẫu hoặc tính gradient phần dư sai số. |
@@ -302,7 +308,7 @@ Kết quả phát hiện giá trị nhỏ nhất của biến độ ẩm (`hum`)
 
 Biến phụ thuộc mục tiêu $Y$ (`cnt`) thể hiện tổng số lượng xe đạp được điều phối trong một khung giờ nhất định. Việc khảo sát hình thái phân phối xác suất của biến mục tiêu có ý nghĩa quyết định đến việc lựa chọn mô hình và xây dựng hàm mất mát.
 
-![Phân phối lượng xe thuê gốc và sau biến đổi log1p](../output/eda_1_histogram_log.png)
+![Phân phối lượng xe thuê gốc và sau biến đổi log1p](../output/step1_eda_01_histogram_log.png)
 *Hình 4.1: Biểu đồ Histogram kiểm tra độ lệch phân phối của biến `cnt` gốc (trái) và sau khi áp dụng hàm biến đổi $\text{log1p}$ (phải).*
 
 Qua biểu đồ Histogram (Hình 4.1 - bên trái), phân phối của biến `cnt` bị **lệch phải rất nặng (Right-skewed / Positive skewness)**. Bằng chứng định lượng thể hiện qua sự chênh lệch rõ rệt giữa hai đại lượng xu hướng tập trung:
@@ -324,7 +330,7 @@ Việc bổ sung thêm hằng số $1$ vào biểu thức logarit nhằm giải 
 
 Sự biến thiên thời tiết qua 4 mùa là yếu tố ngoại sinh ảnh hưởng trực tiếp đến hành vi di chuyển bằng xe đạp. Nhóm em sử dụng biểu đồ Hộp (Boxplot) để phát hiện các điểm ngoại lai theo từng mùa dựa trên phương pháp **Khoảng tứ phân vị (Interquartile Range - IQR)** của John Tukey.
 
-![Biểu đồ Boxplot lượng xe thuê theo mùa](../output/eda_2_boxplot_outliers.png)
+![Biểu đồ Boxplot lượng xe thuê theo mùa](../output/step1_eda_02_boxplot_outliers.png)
 *Hình 4.2: Biểu đồ Boxplot khảo sát mức độ tập trung và các điểm ngoại lai của lượng xe thuê theo 4 mùa trong năm.*
 
 Một điểm dữ liệu $y$ được xác định là ngoại lai phía trên (Upper Outlier) nếu:
@@ -367,7 +373,7 @@ Xét về bản chất dữ liệu, sau khi loại bỏ các thuộc tính đị
 
 Khác với tệp `day.csv`, tệp `hour.csv` cho phép nghiên cứu sự dao động nhu cầu ở độ phân giải mịn theo 24 khung giờ trong ngày ($0 \to 23$).
 
-![Xu hướng thuê xe theo 24 giờ Fever Chart](../output/eda_3_time_trends.png)
+![Xu hướng thuê xe theo 24 giờ Fever Chart](../output/step1_eda_03_time_trends.png)
 *Hình 4.3: Biểu đồ Fever Chart / Line Chart thể hiện lượng xe thuê trung bình theo 24 giờ giữa Ngày đi làm và Ngày nghỉ cuối tuần.*
 
 Quan sát Hình 4.3, nhóm em phát hiện hành vi sử dụng xe đạp hoàn toàn bị chi phối bởi tính chất ngày làm việc:
@@ -391,7 +397,7 @@ $$\text{is\_rush\_hour} =
 
 Nhằm kiểm tra mối liên hệ tuyến tính giữa các biến đầu vào và phát hiện các rủi ro thống kê, nhóm em xây dựng ma trận tương quan Pearson và biểu đồ phân tán (Hình 4.4).
 
-![Ma trận tương quan và Scatter Plot giữa temp và atemp](../output/eda_4_scatter_heatmap.png)
+![Ma trận tương quan và Scatter Plot giữa temp và atemp](../output/step1_eda_04_scatter_heatmap.png)
 *Hình 4.4: Biểu đồ Scatter Plot phân tích mối quan hệ giữa `temp` và `atemp` (trái) cùng Ma trận tương quan nhiệt Correlation Heatmap giữa các thuộc tính số học (phải).*
 
 #### 1. Hiện tượng Đa cộng tuyến hoàn hảo giữa `temp` và `atemp`
@@ -424,8 +430,8 @@ $$r_{xy} = \frac{\sum_{i=1}^{n} (x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum_{i=1}
 
 Hệ số $r$ nhận giá trị trong đoạn $[-1, +1]$. Dấu của $r$ thể hiện chiều hướng tác động (dấu dương: thuận chiều; dấu âm: nghịch chiều), và độ lớn trị tuyệt đối $|r|$ thể hiện cường độ liên kết tuyến tính giữa hai biến.
 
-![Tác động điều kiện thời tiết lên nhu cầu thuê xe](../output/eda_5_weather_impact.png)
-*Hình 4.5: Bộ biểu đồ phân tích tác động của 4 yếu tố thời tiết lên lượng xe thuê `cnt` (gồm Boxplot cho `weathersit` và Scatter Plot kèm đường xu hướng hồi quy cho `temp`, `hum`, `windspeed`). Các biểu đồ chi tiết độc lập khổ lớn được lưu trữ tại `output/eda_5a_weather_boxplot.png`, `output/eda_5b_temp_scatter.png`, `output/eda_5c_hum_scatter.png`, `output/eda_5d_windspeed_scatter.png`.*
+![Tác động điều kiện thời tiết lên nhu cầu thuê xe](../output/step1_eda_05_weather_impact.png)
+*Hình 4.5: Bộ biểu đồ phân tích tác động của 4 yếu tố thời tiết lên lượng xe thuê `cnt` (gồm Boxplot cho `weathersit` và Scatter Plot kèm đường xu hướng hồi quy cho `temp`, `hum`, `windspeed`). Các biểu đồ chi tiết độc lập khổ lớn được lưu trữ tại `output/step1_eda_05a_weather_boxplot.png`, `output/step1_eda_05b_temp_scatter.png`, `output/step1_eda_05c_hum_scatter.png`, `output/step1_eda_05d_windspeed_scatter.png`.*
 
 **Bảng 4.3: Thống kê định lượng lượng xe thuê và Hệ số tương quan Pearson theo yếu tố thời tiết**
 
@@ -452,7 +458,7 @@ Hệ số $r$ nhận giá trị trong đoạn $[-1, +1]$. Dấu của $r$ thể 
 
 Để định lượng hiệu ứng kép (Interaction Effect) giữa thời gian và thời tiết, nhóm em xây dựng Heatmap kết hợp `hr × weathersit` thể hiện lượng xe thuê trung bình tại mỗi ô giao thoa (Hình 4.6).
 
-![Heatmap giờ trong ngày × loại thời tiết](../output/eda_6_time_weather_heatmap.png)
+![Heatmap giờ trong ngày × loại thời tiết](../output/step1_eda_06_time_weather_heatmap.png)
 *Hình 4.6: Heatmap tương tác giữa Giờ trong ngày (`hr`) và Loại thời tiết (`weathersit`) cho thấy lượng xe thuê trung bình tại mỗi khung giờ dưới từng điều kiện thời tiết khác nhau.*
 
 Hình 4.6 tiết lộ hiệu ứng kép quan trọng: **thời tiết khuếch đại hoặc suy giảm đỉnh giờ cao điểm** một cách có cấu trúc rõ ràng:
@@ -466,6 +472,132 @@ Hình 4.6 tiết lộ hiệu ứng kép quan trọng: **thời tiết khuếch �
 
 *(Hết Phần 1 Mục 4. Toàn bộ các phát hiện trên là tiền đề trực tiếp để triển khai Giai đoạn tiền xử lý dữ liệu và tạo đặc trưng ở phần tiếp theo).*
 
+---
+
+### 4.8. Khung phương pháp luận: Quy trình 7 bước của Học máy cổ điển (Classical ML Workflow)
+
+Để giải quyết bài toán dự đoán nhu cầu thuê xe một cách minh bạch, có khả năng giải thích và tuân thủ nghiêm ngặt chuẩn mực khoa học dữ liệu, nhóm em xây dựng và triển khai toàn bộ đồ án theo đúng **Quy trình 7 bước của Học máy cổ điển (Classical Machine Learning Workflow)**. Thay vì đưa dữ liệu thô vào các mô hình "hộp đen" phức tạp, nhóm em tập trung tối đa nguồn lực vào việc thấu hiểu dữ liệu (Data Understanding), làm sạch thực chứng (Data Cleaning) và kỹ thuật tạo đặc trưng dựa trên tri thức miền (Domain-driven Feature Engineering).
+
+```mermaid
+flowchart TD
+    A["1. Thu thập dữ liệu<br/>(UCI Bike Sharing - hour.csv: 17,379 dòng)"] --> B["2. Khám phá & Làm sạch dữ liệu<br/>(Xử lý 22 lỗi cảm biến hum=0, Xóa rò rỉ casual/registered, Xóa đa cộng tuyến atemp)"]
+    B --> C["3. Kỹ thuật tạo đặc trưng<br/>(Capping IQR ngoại lai, Mã hóa sin/cos, is_rush_hour, One-Hot, Phân cụm K-Means)"]
+    C --> D["4. Phân chia Train/Test & Chuẩn hóa<br/>(Chia 80% Train - 20% Test TRƯỚC khi Scale: Zero Data Leakage)"]
+    D --> E["5. Huấn luyện mô hình (Model Training)<br/>(8 mô hình Hồi quy cốt lõi + Đối chứng Thô vs. Sạch)"]
+    E --> F["6. Tinh chỉnh siêu tham số<br/>(5-Fold Cross Validation + GridSearchCV n_jobs=-1)"]
+    F --> G["7. Đánh giá & Dự báo thực tế<br/>(So sánh MAE, MSE, RMSE, R², Phân tích Feature Importance, Dự đoán mẫu mới)"]
+```
+*Hình 4.7: Sơ đồ khối quy trình 7 bước của Học máy cổ điển được nhóm em áp dụng xuyên suốt đồ án.*
 
 ---
-*(Phần tiếp theo của Mục 4: Tiền xử lý, Kỹ thuật đặc trưng và Chuẩn hóa dữ liệu sẽ được nối tiếp vào đây sau khi thực hiện Giai đoạn 4).*
+
+### 4.9. Làm sạch dữ liệu và Xử lý lỗi cảm biến
+
+Dựa trên kết quả khám phá dữ liệu (EDA), nhóm em tiến hành 3 thao tác làm sạch mang tính quyết định:
+
+#### 1. Loại bỏ các thuộc tính định danh vô nghĩa
+Cột `instant` (chỉ mục số thứ tự dòng) và `dteday` (chuỗi văn bản ngày tháng) không mang giá trị quy luật toán học cho các thuật toán học máy cổ điển nên được loại bỏ khỏi ma trận đặc trưng.
+
+#### 2. Loại bỏ triệt để nguy cơ rò rỉ dữ liệu (Zero Data Leakage)
+Hai thuộc tính `casual` (số lượng khách vãng lai) và `registered` (số lượng khách hội viên) có mối quan hệ số học đồng nhất:
+$$\text{cnt} = \text{casual} + \text{registered}$$
+Trong thực tế vận hành hệ thống xe đạp, tại thời điểm cần dự đoán nhu cầu của giờ tiếp theo hoặc ngày mai, người quản trị hoàn toàn chưa thể biết trước số lượng khách vãng lai và khách hội viên. Nếu giữ lại hai cột này, các mô hình học máy sẽ chỉ học phép cộng số học đơn giản và cho ra độ chính xác $100\%$ giả tạo (Data Leakage), làm mất hoàn toàn khả năng khái quát hóa. Do đó, nhóm em bắt buộc loại bỏ `casual` và `registered` ngay từ đầu.
+
+#### 3. Loại bỏ thuộc tính đa cộng tuyến hoàn hảo
+Kết quả phân tích ma trận tương quan ở Hình 4.4 cho thấy nhiệt độ thực tế (`temp`) và nhiệt độ cảm nhận (`atemp`) có hệ số tương quan đạt tới $r = +0.99$. Sự phụ thuộc tuyến tính gần như tuyệt đối này gây ra hiện tượng ma trận suy biến trong hồi quy tuyến tính OLS. Nhóm em loại bỏ cột `atemp` và giữ lại cột `temp`.
+
+#### 4. Khắc phục lỗi cảm biến độ ẩm (`hum == 0`)
+Vào ngày 10/03/2011, trạm quan trắc gặp sự cố kỹ thuật ghi nhận 22 dòng có độ ẩm bằng 0. Thay vì xóa bỏ làm gián đoạn chuỗi thời gian liên tục, nhóm em áp dụng phương pháp điền khuyết bằng **giá trị trung vị (Median)** của độ ẩm theo từng tháng và từng khung giờ tương ứng từ các ngày bình thường. Giá trị độ ẩm nhỏ nhất hợp lệ sau xử lý là $0.0800$, đảm bảo tính toàn vẹn của 17,379 giờ quan sát.
+
+---
+
+### 4.10. Kỹ thuật tạo đặc trưng (Feature Engineering)
+
+#### 1. Lọc ngoại lai biến mục tiêu `cnt` bằng phương pháp Capping (Winsorization) theo Mùa
+Biến mục tiêu `cnt` có phân phối lệch phải mạnh với 478 điểm ngoại lai ($2.75\%$ dữ liệu) vượt ngưỡng $Q_3 + 1.5 \times IQR$ theo từng mùa. Những điểm này phần lớn là các giờ cao điểm bùng nổ vào những ngày thời tiết lý tưởng (lượng thuê lên tới $800 - 977$ xe/giờ).
+- **Vấn đề kỹ thuật:** Các giá trị cực lớn này tạo ra sai số bình phương khổng lồ $(y - \hat{y})^2 \approx 600,000$, làm bùng nổ hàm mất mát MSE và kéo lệch nghiêm trọng đường hồi quy OLS cũng như khiến thuật toán AdaBoost bị hiện tượng học vẹt (overfitting) do tự động tăng vọt trọng số cho các mẫu khó này.
+- **Giải pháp Capping (Winsorization):** Thay vì xóa bỏ dòng dữ liệu (làm mất mát thông tin đỉnh nhu cầu), nhóm em áp dụng kỹ thuật Capping: giới hạn trần các điểm vượt ngưỡng về đúng giá trị râu trên $Q_3 + 1.5 \times IQR$ của từng mùa tương ứng (Bảng 4.4).
+
+*Bảng 4.4: Thông số thống kê và ngưỡng trần râu trên (Upper Whisker) theo 4 mùa.*
+| Mùa trong năm (`season`) | Phân vị $Q_1$ | Phân vị $Q_3$ | Khoảng $IQR$ | Ngưỡng râu trên ($Q_3 + 1.5 \times IQR$) | Giá trị Max cũ | Số điểm ngoại lai |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Mùa 1 (Xuân)** | 23.0 | 158.0 | 135.0 | **360.5 xe/giờ** | 801 | 195 dòng |
+| **Mùa 2 (Hè)** | 46.0 | 311.0 | 265.0 | **708.5 xe/giờ** | 957 | 73 dòng |
+| **Mùa 3 (Thu)** | 68.0 | 345.0 | 277.0 | **760.5 xe/giờ** | 977 | 98 dòng |
+| **Mùa 4 (Đông)** | 46.0 | 295.0 | 249.0 | **668.5 xe/giờ** | 967 | 112 dòng |
+
+Sau khi áp dụng Capping, giá trị lớn nhất của biến mục tiêu `cnt` trên toàn bộ tập dữ liệu được giới hạn an toàn ở mức **$760.5$ xe/giờ** (mức trần của Mùa Thu), vừa giữ trọn vẹn $17,379$ giờ quan sát, vừa bảo vệ mô hình khỏi hiện tượng bùng nổ gradient và quá khớp.
+
+#### 2. Mã hóa chu kỳ lượng giác ($\sin/\cos$ Cyclical Encoding)
+Các biến thời gian như giờ trong ngày (`hr`: $0 \to 23$), tháng (`mnth`: $1 \to 12$) và thứ trong tuần (`weekday`: $0 \to 6$) có bản chất là các chu kỳ tuần hoàn khép kín. Tuy nhiên, các thuật toán học máy chỉ nhìn nhận các con số theo khoảng cách tuyến tính: $|23 - 0| = 23$, khiến máy hiểu lầm rằng 23h đêm và 0h sáng là hai thái cực xa nhau nhất trong ngày, trong khi thực tế chúng là hai thời điểm liền kề nhau (chỉ cách nhau 1 giờ).
+Để tái tạo tính chất hình học vòng tròn, nhóm em sử dụng phép chiếu lượng giác lên đường tròn đơn vị hai chiều $(x, y) = (\sin, \cos)$:
+$$x_{\sin} = \sin\left(\frac{2\pi \cdot t}{T}\right), \quad x_{\cos} = \cos\left(\frac{2\pi \cdot t}{T}\right)$$
+với chu kỳ $T = 24$ (cho giờ), $T = 12$ (cho tháng), và $T = 7$ (cho thứ). Việc bắt buộc sử dụng đồng thời cả cặp $(\sin, \cos)$ đảm bảo mỗi thời điểm trong chu kỳ có một tọa độ duy nhất không bị suy biến đối xứng (ví dụ phân biệt rõ 2h sáng và 10h trưa cùng có giá trị $\sin = 0.5$). Kỹ thuật này sinh ra 6 đặc trưng chu kỳ: `hr_sin`, `hr_cos`, `mnth_sin`, `mnth_cos`, `weekday_sin`, `weekday_cos`.
+
+#### 3. Tạo đặc trưng nhị phân Giờ cao điểm (`is_rush_hour`)
+Từ kết quả biểu đồ Fever chart ở Hình 4.3, các đỉnh nhu cầu cao nhất chỉ bùng nổ vào các ngày làm việc thông thường (`workingday == 1`) tại khung giờ sáng ($7\text{h}, 8\text{h}, 9\text{h}$) và chiều tối ($17\text{h}, 18\text{h}, 19\text{h}$). Nhóm em tạo biến nhị phân:
+$$\text{is\_rush\_hour} = \begin{cases} 1 & \text{khi } \text{workingday} = 1 \text{ và } \text{hr} \in \{7, 8, 9, 17, 18, 19\} \\ 0 & \text{ngược lại} \end{cases}$$
+Đặc trưng này chiếm $25.0\%$ tổng số quan sát ($4,352$ giờ) với lượng thuê trung bình lên tới **$371.4$ xe/giờ**, cao gấp **2.53 lần** so với giờ bình thường ($146.7$ xe/giờ).
+
+#### 4. Mã hóa biến phân loại One-Hot Encoding chống Bẫy biến giả
+Biến mùa (`season`: 1, 2, 3, 4) và loại thời tiết (`weathersit`: 1, 2, 3, 4) là các biến danh nghĩa (Categorical - Nominal). Để tránh việc mô hình hiểu nhầm giá trị số học (như hiểu nhầm mùa đông gấp 4 lần mùa xuân), nhóm em áp dụng mã hóa One-Hot với tham số `drop_first=True`. Quy tắc bỏ đi 1 biến giả cơ sở ($K$ nhóm tạo $K - 1$ cột) giúp loại bỏ hoàn toàn phương trình phụ thuộc tuyến tính $\sum_{i=1}^K D_i = 1$, triệt tiêu lỗi Đa cộng tuyến hoàn hảo (Perfect Multicollinearity / Dummy Variable Trap) và giúp ma trận $X^T X$ không bị suy biến.
+
+---
+
+### 4.11. Đánh giá và Chọn lọc đặc trưng bằng Kiểm định Thống kê (Feature Selection)
+
+Để kiểm chứng mức độ đóng góp khách quan của từng biến đặc trưng lên biến mục tiêu `cnt`, nhóm em tiến hành đồng thời hai phương pháp kiểm định thống kê:
+1. **ANOVA F-test (`f_regression`):** Đo lường mối quan hệ tuyến tính dựa trên tỷ số phương sai giải thích.
+2. **Thông tin tương hỗ Mutual Information (`mutual_info_regression`):** Đo lường mức độ phụ thuộc phi tuyến dựa trên lý thuyết entropy thông tin Shannon.
+
+![Đánh giá và Chọn lọc đặc trưng](../output/step2_prep_01_feature_selection.png)
+*Hình 4.8: Bảng xếp hạng mức độ ảnh hưởng của các đặc trưng lên nhu cầu thuê xe qua kiểm định ANOVA F-test (tuyến tính) và Mutual Information (phi tuyến).*
+
+**Phân tích kết quả từ Hình 4.8:**
+- **Đặc trưng do nhóm tự tạo bứt phá dẫn đầu:** Biến `is_rush_hour` đạt chỉ số **F-Score cao kỷ lục (> 6,300)**, vượt trội hoàn toàn so với các biến khác, chứng minh việc tạo biến giờ cao điểm đã cung cấp một tín hiệu tuyến tính cực kỳ sắc bén cho các mô hình hồi quy.
+- **Sức mạnh của biến thời gian và nhiệt độ:** Cả hai bảng kiểm định đều đồng thuận xếp `hr`, `hr_sin`, `hr_cos` và `temp` vào nhóm có sức mạnh giải thích cao nhất (Mutual Information đạt $> 0.35$ nats).
+- **Tính hiệu quả của mã hóa chu kỳ:** Các cột lượng giác `hr_sin`, `hr_cos` đều xếp ở vị trí cao trong bảng Mutual Information, khẳng định kỹ thuật mã hóa chu kỳ giúp mô hình nắm bắt rất tốt tính tuần hoàn của dữ liệu.
+
+---
+
+### 4.12. Phân cụm K-Means cho 24 Khung giờ và Giảm chiều dữ liệu bằng PCA
+
+Nhằm làm giàu thêm thông tin cho các mô hình học máy, nhóm em áp dụng phối hợp hai thuật toán học không giám sát (Unsupervised Learning): **K-Means Clustering** và **PCA (Principal Component Analysis)**.
+
+#### 1. Phân cụm hành vi 24 khung giờ bằng K-Means ($k=3$)
+Thay vì xem xét từng giờ riêng rẽ, nhóm em xây dựng hồ sơ nhu cầu của 24 khung giờ dựa trên 3 thông số: $[\text{Lượng thuê TB}, \text{Lượng thuê Ngày thường}, \text{Lượng thuê Cuối tuần}]$. Thuật toán K-Means với $k=3$ đã tự động phân tách 24 giờ thành **3 cụm hành vi đời sống rất tự nhiên**:
+- **Cụm 0 — Đêm khuya & rạng sáng (0h–6h, 22h–23h):** Gồm 9 khung giờ người dân ngủ nghỉ, nhu cầu chạm đáy chỉ **$49.7$ xe/giờ** ($37.2\%$ dữ liệu).
+- **Cụm 1 — Ban ngày sinh hoạt thông thường (7h, 9h–16h, 20h–21h):** Gồm 11 khung giờ sinh hoạt ổn định, đạt **$228.7$ xe/giờ** ($46.1\%$ dữ liệu).
+- **Cụm 2 — Cao điểm đi làm & tan tầm (8h, 17h–19h):** Gồm 4 khung giờ đỉnh điểm của người đi làm và học sinh, lượng thuê bùng nổ lên **$374.1$ xe/giờ** ($16.8\%$ dữ liệu).
+
+Đặc trưng mới `hour_cluster` được tạo ra để cung cấp tín hiệu nhóm hành vi trực tiếp cho các mô hình hồi quy.
+
+#### 2. Trực quan hóa không gian đặc trưng bằng PCA
+Không gian dữ liệu gồm 22 chiều đặc trưng không thể quan sát bằng mắt thường. Nhóm em áp dụng **PCA** nén toàn bộ không gian này về 2 thành phần chính (PC1 và PC2) giải thích **$25.2\%$ tổng phương sai** ($PC_1: 13.1\%, PC_2: 12.2\%$) và trực quan hóa tại Hình 4.9.
+
+![Phân cụm K-Means và Không gian đặc trưng PCA](../output/step2_prep_02_pca_kmeans.png)
+*Hình 4.9: (Trái) Hồ sơ phân cụm 24 khung giờ theo K-Means (k=3); (Phải) Không gian đặc trưng 2D qua PCA với 3 cụm màu và các tâm cụm (Centroids) phân bố cách biệt.*
+
+**Nhận xét từ Hình 4.9:**
+- Trên mặt phẳng 2D của PCA, các điểm dữ liệu thuộc 3 cụm có sự phân tách rõ rệt thành từng dải màu dọc theo trục tọa độ.
+- Ba tâm cụm (Centroids - ký hiệu dấu chữ `X`) nằm cách biệt nhau: Tâm Cụm 0 dạt về phía $(+0.295, -0.362)$, Tâm Cụm 1 ở $(-0.150, +0.175)$ và Tâm Cụm 2 ở $(-0.240, +0.322)$. Sự cách biệt này là bằng chứng thực chứng khẳng định việc phân cụm K-Means đã tìm được cấu trúc không gian tách biệt rõ ràng, mang lại giá trị phân loại cao cho các mô hình học máy.
+- *Lưu ý kỹ thuật:* Hai cột tọa độ `pca_1` và `pca_2` chỉ phục vụ trực quan hóa trên đồ thị Hình 4.9 và được nhóm em **loại bỏ khỏi ma trận đặc trưng huấn luyện** để tránh gây đa cộng tuyến nhân tạo cho mô hình.
+
+---
+
+### 4.13. Phân chia tập dữ liệu và Chuẩn hóa tuân thủ nguyên tắc Chống rò rỉ dữ liệu (Zero Data Leakage)
+
+Đây là bước kỹ thuật cốt lõi bảo vệ đồ án khỏi các lỗi phương pháp luận nghiêm trọng:
+1. **Phân chia Train / Test trước khi chuẩn hóa:**
+   - Tập dữ liệu $17,379$ quan sát được phân chia thành **Tập Huấn luyện ($80\%$ - $13,903$ dòng)** và **Tập Kiểm tra ($20\%$ - $3,476$ dòng)** với `random_state=42`.
+   - Việc phân chia được thực hiện **TRƯỚC** khi gọi bất kỳ bộ Scaler nào.
+2. **Chuẩn hóa Zero Data Leakage:**
+   - Bộ chuẩn hóa `StandardScaler` (cùng `MinMaxScaler` và `RobustScaler`) **chỉ được gọi lệnh `.fit()` duy nhất trên tập $X_{\text{train}}$** để học giá trị trung bình $\mu$ và độ lệch chuẩn $\sigma$ của quá khứ.
+   - Sau đó, dùng chính tham số cố định này để `.transform()` cho cả $X_{\text{train}}$ và $X_{\text{test}}$. Mô hình tuyệt đối không được tiếp cận bất kỳ thông tin thống kê nào của tập kiểm tra.
+   - *Kiểm chứng số học:* Tập $X_{\text{train\_scaled}}$ có $\text{Mean} = 0.0000$ và $\text{Std} = 1.0000$ (chuẩn hóa hoàn hảo); tập $X_{\text{test\_scaled}}$ có $\text{Mean} = 0.0012$ và $\text{Std} = 1.0164$ (có độ lệch tự nhiên vì tập Test đại diện cho dữ liệu tương lai chưa từng nhìn thấy).
+3. **Lưu trữ dữ liệu sạch:**
+   - Toàn bộ tập dữ liệu đã qua xử lý được lưu trữ thành 7 file CSV sạch trong thư mục `data/` (`hour_cleaned.csv`, `X_train.csv`, `X_test.csv`, `y_train.csv`, `y_test.csv`, `X_train_scaled.csv`, `X_test_scaled.csv`), sẵn sàng cho việc triển khai thực nghiệm mô hình ở Mục 5.
+
+---
+
+*(Hết Mục 4. Toàn bộ quy trình tiền xử lý và chuẩn hóa dữ liệu trên là nền tảng vững chắc để nhóm em tiến hành Huấn luyện và Đánh giá thực nghiệm các mô hình ở Mục 5 tiếp theo).*
